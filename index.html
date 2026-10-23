@@ -618,7 +618,7 @@
               Altyapı: <strong class="saas-system-name text-white font-bold" id="saas-system-brand-name">SaaS Platform</strong>
             </span>
             <span class="saas-badge-divider text-slate-600" aria-hidden="true">|</span>
-            <a href="http://localhost:5500/saas-panel-ui/login.html" 
+            <a href="/saas-panel-ui/index.html" 
                target="_blank" 
                rel="noopener noreferrer" 
                referrerpolicy="strict-origin-when-cross-origin"
@@ -1225,9 +1225,9 @@
       const slug = (typeof getStoreSubdomain === 'function') ? getStoreSubdomain() : 'ahmetoto';
       defaultHeaders['X-Tenant-Slug'] = slug;
 
-      const baseUrl = (window.API_BASE_URL || window.API_BASE || 'http://localhost:5000/api').replace(/\/+$/, '');
+      const baseUrl = (window.API_BASE_URL || window.API_BASE || 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api').replace(/\/+$/, '');
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
-      const targetUrl = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? `http://localhost:5000${endpoint}` : `${baseUrl}${cleanEndpoint}`);
+      const targetUrl = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? `https://saas-g-ncel-10-10-2026simdi-main.onrender.com${endpoint}` : `${baseUrl}${cleanEndpoint}`);
 
       const config = {
         ...options,
@@ -1515,8 +1515,7 @@
         let res = null;
 
         const candidateEndpoints = [
-          `http://localhost:5000/api/store/products?${queryString}`,
-          `http://localhost:3000/api/store/products?${queryString}`,
+          `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products?${queryString}`,
           `/api/store/products?${queryString}`,
           `/api/products?${queryString}`
         ];
@@ -1528,7 +1527,7 @@
         for (const targetUrl of candidateEndpoints) {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
             const response = await fetch(targetUrl, { method: 'GET', headers, signal: controller.signal });
             clearTimeout(timeoutId);
             if (response.ok) {
@@ -1631,7 +1630,7 @@
           imgUrl = 'https:' + imgUrl;
         }
         if (!imgUrl) {
-          const apiBaseUrl = (typeof window !== 'undefined' && window.API_BASE ? window.API_BASE.replace(/\/api\/?$/, '') : 'http://localhost:5000');
+          const apiBaseUrl = (typeof window !== 'undefined' && window.API_BASE ? window.API_BASE.replace(/\/api\/?$/, '') : 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com');
           imgUrl = `${apiBaseUrl}/api/catalog/diagram?oe=${encodeURIComponent(prod.oeNumber || 'OEM')}&brand=${encodeURIComponent(prod.vehicleBrand || '')}&type=general`;
         }
 
@@ -2762,7 +2761,7 @@
         imgUrl = 'https:' + imgUrl;
       }
       if (!imgUrl) {
-        const apiBaseUrl = (typeof window !== 'undefined' && window.API_BASE ? window.API_BASE.replace(/\/api\/?$/, '') : 'http://localhost:5000');
+        const apiBaseUrl = (typeof window !== 'undefined' && window.API_BASE ? window.API_BASE.replace(/\/api\/?$/, '') : 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com');
         imgUrl = `${apiBaseUrl}/api/catalog/diagram?oe=${encodeURIComponent(oeNumber || 'OEM')}&brand=${encodeURIComponent(vehicleBrand || '')}&type=general`;
       }
 

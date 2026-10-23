@@ -5,7 +5,7 @@
  * ============================================================================
  * 
  * Özellikler:
- * 1. Canlı Backend Desteği: Express API (http://localhost:5000) açık olduğunda
+ * 1. Canlı Backend Desteği: Express API (https://saas-g-ncel-10-10-2026simdi-main.onrender.com) açık olduğunda
  *    tüm istekleri doğrudan PostgreSQL veritabanına iletir.
  * 2. Akıllı Çevrimdışı / Bağımsız (Standalone / file://) Modu:
  *    Sunucu henüz başlatılmamışsa veya dosya doğrudan tarayıcıda (file://) açılmışsa
@@ -17,7 +17,7 @@
   'use strict';
 
   // Sunucu Adresi Yapılandırması (Headless Mimari prompt.md gereği doğrudan absolute URL):
-  const API_BASE = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'http://localhost:5000/api';
+  const API_BASE = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api';
   const isDirectExpress = false;
 
   // ----------------------------------------------------------------------------
@@ -1405,7 +1405,7 @@
       let brandFilter = '';
       let searchFilter = '';
       try {
-        const parsedUrl = new URL(endpoint, 'http://localhost');
+        const parsedUrl = new URL(endpoint, 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com');
         brandFilter = (parsedUrl.searchParams.get('brand') || '').trim().toLowerCase();
         searchFilter = (parsedUrl.searchParams.get('search') || '').trim().toLowerCase();
       } catch (e) {}
@@ -1665,7 +1665,7 @@
       if (!url.startsWith('/api')) {
         url = `${API_BASE}${url.startsWith('/') ? url : '/' + url}`;
       } else if (!isDirectExpress) {
-        url = `http://localhost:5000${url}`;
+        url = `https://saas-g-ncel-10-10-2026simdi-main.onrender.com${url}`;
       }
     }
 
@@ -1685,20 +1685,7 @@
     // 5. ADIM: Tenant Algılama (Subdomain/Slug Resolution)
     // URL parametresinden (?tenant=slug veya ?subdomain=slug) veya hostname subdomain'inden tenant slug algıla
     if (!headers.has('X-Tenant-Slug')) {
-      let slug = null;
-      if (typeof window !== 'undefined' && window.location) {
-        const urlParams = new URLSearchParams(window.location.search);
-        slug = urlParams.get('tenant') || urlParams.get('subdomain');
-        if (!slug && window.location.hostname) {
-          const parts = window.location.hostname.split('.');
-          if (parts.length > 2 && parts[0] !== 'www' && parts[0] !== 'localhost') {
-            slug = parts[0];
-          }
-        }
-        if (!slug) {
-          slug = localStorage.getItem('tenantSlug') || 'ahmetoto';
-        }
-      }
+      const slug = getResolvedTenantSlug();
       if (slug) {
         headers.set('X-Tenant-Slug', slug);
       }
@@ -1709,7 +1696,7 @@
       body = JSON.stringify(body);
     }
 
-    // 3. Canlı Sunucuya Bağlantı Denemesi (Yerel localhost Express API'sine doğrudan bağlan)
+    // 3. Canlı Sunucuya Bağlantı Denemesi (Render Canlı Express API'sine doğrudan bağlan)
     try {
       const controller = new AbortController();
       const timeoutMs = (options.body instanceof FormData) ? 60000 : 15000;
@@ -1940,6 +1927,36 @@
     }
 
     return null;
+  }
+
+  /**
+   * getResolvedTenantSlug:
+   * URL parametresi (?tenant=, ?subdomain=, ?slug=), hostname veya localStorage üzerinden aktif bayi slug'ını çözer.
+   */
+  function getResolvedTenantSlug() {
+    if (typeof window === 'undefined' || !window.location) return 'ahmetoto';
+    const urlParams = new URLSearchParams(window.location.search);
+    const qSlug = urlParams.get('tenant') || urlParams.get('subdomain') || urlParams.get('slug');
+    if (qSlug && qSlug.trim()) {
+      const clean = qSlug.trim().toLowerCase();
+      try { localStorage.setItem('tenantSlug', clean); } catch (e) {}
+      return clean;
+    }
+    const host = window.location.hostname;
+    if (host && host.includes('.')) {
+      const parts = host.split('.');
+      if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'localhost') {
+        return parts[0].toLowerCase();
+      }
+      if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'localhost') {
+        return parts[0].toLowerCase();
+      }
+    }
+    try {
+      return localStorage.getItem('tenantSlug') || 'ahmetoto';
+    } catch (e) {
+      return 'ahmetoto';
+    }
   }
 
   // Global window nesnesine ata
