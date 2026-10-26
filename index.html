@@ -1586,7 +1586,16 @@
 
       // Stok filtresi
       if (inStockOnly) {
-        items = items.filter(it => (parseInt(it.stock, 10) || 0) > 0);
+        items = items.filter(it => {
+          const p = it.product || it;
+          const sCand = (p && p.stock !== undefined && p.stock !== null)
+            ? p.stock
+            : (it.stock !== undefined && it.stock !== null ? it.stock : null);
+          if (sCand !== null && sCand !== undefined) {
+            return (parseInt(sCand, 10) || 0) > 0;
+          }
+          return true;
+        });
       }
 
       // Sıralama
@@ -1626,7 +1635,22 @@
         const vehicleBrand = escapeHtml(prod.vehicleBrand || '');
         const compatibleModels = escapeHtml(prod.compatibleModels || '');
         const category = escapeHtml(prod.category || 'Otomotiv');
-        const stock = parseInt(item.stock, 10) || 0;
+        const stockCandidate = (prod && prod.stock !== undefined && prod.stock !== null)
+          ? prod.stock
+          : ((item.stock !== undefined && item.stock !== null)
+              ? item.stock
+              : ((prod && prod.quantity !== undefined && prod.quantity !== null)
+                  ? prod.quantity
+                  : (item.quantity !== undefined && item.quantity !== null ? item.quantity : null)));
+
+        let stock = 0;
+        if (stockCandidate !== undefined && stockCandidate !== null) {
+          const parsed = parseInt(stockCandidate, 10);
+          stock = isNaN(parsed) ? 0 : parsed;
+        } else {
+          // Backend stok miktarını gizlemiş veya göndermemişse kataloğu tükenmiş sayma
+          stock = 10;
+        }
         const isOutOfStock = stock <= 0;
 
         let imgUrl = prod.imageUrl || (prod.images && prod.images[0]) || item.imageUrl || '';
@@ -1697,7 +1721,7 @@
                 <input type="number" id="qty-input-${tenantProductId}" value="1" min="1" max="${stock}" class="w-8 text-center text-xs font-bold bg-transparent border-0 focus:outline-none" readonly>
                 <button type="button" class="w-7 h-7 flex items-center justify-center font-black text-slate-500 hover:text-slate-800 cursor-pointer" onclick="changeQtyInput('${tenantProductId}', 1)">+</button>
               </div>
-              <button type="button" class="btn-add-to-cart flex-1 h-10 rounded-xl bg-[var(--tenant-color)] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer" onclick="handleAddToCartClick('${tenantProductId}', '${escapeHtml(oeNumber)}', '${escapeHtml(productName)}', ${listP}, ${discP}, ${stock}, '${escapeHtml(imgUrl)}')">
+              <button type="button" class="btn-add-to-cart flex-1 h-10 rounded-xl bg-[var(--tenant-color)] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer" onclick="handleAddToCartClick('${tenantProductId}', '${escapeHtml(oeNumber)}', '${escapeHtml(productName)}', ${listP}, ${discountedPrice}, ${stock}, '${escapeHtml(imgUrl)}')">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
                 <span>Sepete Ekle</span>
               </button>
@@ -1712,14 +1736,17 @@
             
             <!-- Görsel Alanı (Ürün Detay & Muadil Tetikleyici) -->
             <div class="relative h-52 bg-gradient-to-b from-slate-50 to-slate-100/60 p-4 flex items-center justify-center overflow-hidden border-b border-slate-100 cursor-pointer" onclick="openProductDetailModal('${tenantProductId}')">
-              <div class="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-                <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-white/95 text-slate-700 border border-slate-200 shadow-xs group-hover:bg-[var(--tenant-color)] group-hover:text-white transition-colors cursor-pointer" onclick="event.stopPropagation(); copyOeToClipboard('${oeNumber}');" title="Kopyalamak için tıklayın">
-                  ${oeNumber}
-                </span>
-                ${brandBadge}
-              </div>
-              <div class="absolute top-3 right-3 z-10">
-                ${stockBadge}
+              <!-- Etiket Kapsayıcısı (flex-wrap ve gap-2 ile çakışma ve taşmalar engellenir) -->
+              <div class="absolute top-3 left-3 right-3 flex items-start justify-between flex-wrap gap-2 z-10 pointer-events-none">
+                <div class="flex items-center flex-wrap gap-2 pointer-events-auto">
+                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-white/95 text-slate-700 border border-slate-200 shadow-xs group-hover:bg-[var(--tenant-color)] group-hover:text-white transition-colors cursor-pointer" onclick="event.stopPropagation(); copyOeToClipboard('${oeNumber}');" title="Kopyalamak için tıklayın">
+                    ${oeNumber}
+                  </span>
+                  ${brandBadge}
+                </div>
+                <div class="pointer-events-auto flex flex-wrap gap-2">
+                  ${stockBadge}
+                </div>
               </div>
               <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(productName)}" class="max-h-36 max-w-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out">
             </div>
@@ -2757,7 +2784,21 @@
       const vehicleBrand = prod.vehicleBrand || '';
       const category = prod.category || 'Otomotiv';
       const compatibleModels = prod.compatibleModels || '';
-      const stock = parseInt(item.stock, 10) || 0;
+      const stockCandidate = (prod && prod.stock !== undefined && prod.stock !== null)
+        ? prod.stock
+        : ((item.stock !== undefined && item.stock !== null)
+            ? item.stock
+            : ((prod && prod.quantity !== undefined && prod.quantity !== null)
+                ? prod.quantity
+                : (item.quantity !== undefined && item.quantity !== null ? item.quantity : null)));
+
+      let stock = 0;
+      if (stockCandidate !== undefined && stockCandidate !== null) {
+        const parsed = parseInt(stockCandidate, 10);
+        stock = isNaN(parsed) ? 0 : parsed;
+      } else {
+        stock = 10;
+      }
       const isOutOfStock = stock <= 0;
 
       let imgUrl = prod.imageUrl || (prod.images && prod.images[0]) || item.imageUrl || '';
