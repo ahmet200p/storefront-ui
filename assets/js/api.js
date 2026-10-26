@@ -16,6 +16,10 @@
 (function (window) {
   'use strict';
 
+  // Headless Mimari Bayi Sabiti (prompt.md):
+  const TENANT_SLUG = 'ahmetoto';
+  const SAFE_SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+
   // Sunucu Adresi Yapılandırması (Headless Mimari prompt.md gereği doğrudan absolute URL):
   const API_BASE = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api';
   const isDirectExpress = false;
@@ -1682,12 +1686,18 @@
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    // 5. ADIM: Tenant Algılama (Subdomain/Slug Resolution)
-    // URL parametresinden (?tenant=slug veya ?subdomain=slug) veya hostname subdomain'inden tenant slug algıla
-    if (!headers.has('X-Tenant-Slug')) {
-      const slug = getResolvedTenantSlug();
-      if (slug) {
-        headers.set('X-Tenant-Slug', slug);
+    // 5. ADIM: Tenant Algılama (Subdomain/Slug Resolution) ve Kalıcı Güvenli Enjeksiyon
+    // Backend resolveTenant middleware'i öncelikli olarak 'x-tenant-slug' HTTP başlığını bekler.
+    const slug = getResolvedTenantSlug() || TENANT_SLUG;
+    headers.set('x-tenant-slug', slug);
+    headers.set('X-Tenant-Slug', slug);
+
+    // 6. ADIM: Katalog / Vitrin API İsteklerinde Query Parametresine Tenant Dahil Etme
+    // Backend resolveTenant hem Header hem Query parametresi (?tenant= veya ?subdomain=) destekler.
+    if (url.includes('/store/') || url.includes('/products') || url.includes('/catalog/')) {
+      if (!url.includes('tenant=') && !url.includes('subdomain=') && slug) {
+        const separator = url.includes('?') ? '&' : '?';
+        url = `${url}${separator}tenant=${encodeURIComponent(slug)}&subdomain=${encodeURIComponent(slug)}`;
       }
     }
 
@@ -1933,33 +1943,57 @@
    * getResolvedTenantSlug:
    * URL parametresi (?tenant=, ?subdomain=, ?slug=), hostname veya localStorage üzerinden aktif bayi slug'ını çözer.
    */
+  /**
+   * getResolvedTenantSlug:
+   * URL parametresi (?tenant=, ?subdomain=, ?slug=), hostname veya localStorage üzerinden aktif bayi slug'ını çözer.
+   * Güvenlik: Regex doğrulaması (SQLi, XSS, CRLF enjeksiyonlarına karşı koruma) yaparak güvenli slug döndürür.
+   */
   function getResolvedTenantSlug() {
-    if (typeof window === 'undefined' || !window.location) return 'ahmetoto';
-    const urlParams = new URLSearchParams(window.location.search);
-    const qSlug = urlParams.get('tenant') || urlParams.get('subdomain') || urlParams.get('slug');
-    if (qSlug && qSlug.trim()) {
-      const clean = qSlug.trim().toLowerCase();
-      try { localStorage.setItem('tenantSlug', clean); } catch (e) {}
-      return clean;
-    }
-    const host = window.location.hostname;
-    if (host && host.includes('.')) {
-      const parts = host.split('.');
-      if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'localhost') {
-        return parts[0].toLowerCase();
-      }
-      if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'localhost') {
-        return parts[0].toLowerCase();
-      }
-    }
+    if (typeof window === 'undefined' || !window.location) return TENANT_SLUG;
+    
+    // 1. URL Query Parametreleri
     try {
-      return localStorage.getItem('tenantSlug') || 'ahmetoto';
-    } catch (e) {
-      return 'ahmetoto';
-    }
+      const urlParams = new URLSearchParams(window.location.search);
+      const qSlug = urlParams.get('tenant') || urlParams.get('subdomain') || urlParams.get('slug');
+      if (qSlug && qSlug.trim()) {
+        const clean = qSlug.trim().toLowerCase();
+        if (SAFE_SLUG_REGEX.test(clean)) {
+          try { localStorage.setItem('tenantSlug', clean); } catch (e) {}
+          return clean;
+        }
+      }
+    } catch (e) {}
+
+    // 2. Hostname Subdomain
+    try {
+      const host = window.location.hostname;
+      if (host && host.includes('.')) {
+        const parts = host.split('.');
+        if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'localhost') {
+          const candidate = parts[0].toLowerCase();
+          if (SAFE_SLUG_REGEX.test(candidate)) return candidate;
+        }
+        if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'localhost') {
+          const candidate = parts[0].toLowerCase();
+          if (SAFE_SLUG_REGEX.test(candidate)) return candidate;
+        }
+      }
+    } catch (e) {}
+
+    // 3. LocalStorage
+    try {
+      const stored = localStorage.getItem('tenantSlug');
+      if (stored && SAFE_SLUG_REGEX.test(stored)) {
+        return stored;
+      }
+    } catch (e) {}
+
+    // 4. Varsayılan Headless Bayi Sabiti
+    return TENANT_SLUG;
   }
 
   // Global window nesnesine ata
+  window.TENANT_SLUG = TENANT_SLUG;
   window.API_BASE = API_BASE;
   window.apiFetch = apiFetch;
   window.requireAuth = requireAuth;

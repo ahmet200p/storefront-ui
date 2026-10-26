@@ -1207,7 +1207,13 @@
        ========================================================================== -->
   <script>
     // ==========================================================================
-    // 0. API İSTEMCİSİ VE GLOBAL GÜVENCE (ReferenceError & Anti-Hacker Fallback)
+    // 0. HEADLESS MIMARI BAYI SABITI & GUVENLIK TANIMLARI (prompt.md)
+    // ==========================================================================
+    const TENANT_SLUG = 'ahmetoto';
+    const SAFE_SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+
+    // ==========================================================================
+    // API İSTEMCİSİ VE GLOBAL GÜVENCE (ReferenceError & Anti-Hacker Fallback)
     // ==========================================================================
     async function fallbackApiFetch(endpoint, options = {}) {
       if (typeof window.apiFetch === 'function') {
@@ -1222,12 +1228,19 @@
         defaultHeaders['Authorization'] = `Bearer ${token}`;
       }
       
-      const slug = (typeof getStoreSubdomain === 'function') ? getStoreSubdomain() : 'ahmetoto';
+      const slug = (typeof getStoreSubdomain === 'function') ? getStoreSubdomain() : TENANT_SLUG;
+      defaultHeaders['x-tenant-slug'] = slug;
       defaultHeaders['X-Tenant-Slug'] = slug;
 
       const baseUrl = (window.API_BASE_URL || window.API_BASE || 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api').replace(/\/+$/, '');
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
-      const targetUrl = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? `https://saas-g-ncel-10-10-2026simdi-main.onrender.com${endpoint}` : `${baseUrl}${cleanEndpoint}`);
+      let targetUrl = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? `https://saas-g-ncel-10-10-2026simdi-main.onrender.com${endpoint}` : `${baseUrl}${cleanEndpoint}`);
+
+      // Vitrin ve ürün isteklerinde query parametresine de güvenli tenant bilgisi ekle
+      if ((targetUrl.includes('/store/') || targetUrl.includes('/products') || targetUrl.includes('/catalog/')) && !targetUrl.includes('tenant=') && !targetUrl.includes('subdomain=')) {
+        const separator = targetUrl.includes('?') ? '&' : '?';
+        targetUrl = `${targetUrl}${separator}tenant=${encodeURIComponent(slug)}&subdomain=${encodeURIComponent(slug)}`;
+      }
 
       const config = {
         ...options,
@@ -1315,25 +1328,45 @@
       return `${clean} Yedek Parça`;
     }
 
-    // Get current tenant slug from URL or host
+    // Get current tenant slug from URL or host safely
     function getStoreSubdomain() {
       if (typeof window.getResolvedTenantSlug === 'function') {
-        return window.getResolvedTenantSlug();
+        const resolved = window.getResolvedTenantSlug();
+        if (resolved && SAFE_SLUG_REGEX.test(resolved)) return resolved;
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      const qSlug = urlParams.get('tenant') || urlParams.get('subdomain') || urlParams.get('slug');
-      if (qSlug && qSlug.trim()) {
-        const clean = qSlug.trim().toLowerCase();
-        try { localStorage.setItem('tenantSlug', clean); } catch (e) {}
-        return clean;
-      }
-      const host = window.location.hostname;
-      if (host.includes('.')) {
-        const parts = host.split('.');
-        if (parts.length >= 3 && parts[0] !== 'www') return parts[0].toLowerCase();
-        if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'localhost') return parts[0].toLowerCase();
-      }
-      return localStorage.getItem('tenantSlug') || 'ahmetoto';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const qSlug = urlParams.get('tenant') || urlParams.get('subdomain') || urlParams.get('slug');
+        if (qSlug && qSlug.trim()) {
+          const clean = qSlug.trim().toLowerCase();
+          if (SAFE_SLUG_REGEX.test(clean)) {
+            try { localStorage.setItem('tenantSlug', clean); } catch (e) {}
+            return clean;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const host = window.location.hostname;
+        if (host && host.includes('.')) {
+          const parts = host.split('.');
+          if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'localhost') {
+            const candidate = parts[0].toLowerCase();
+            if (SAFE_SLUG_REGEX.test(candidate)) return candidate;
+          }
+          if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'localhost') {
+            const candidate = parts[0].toLowerCase();
+            if (SAFE_SLUG_REGEX.test(candidate)) return candidate;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const stored = localStorage.getItem('tenantSlug');
+        if (stored && SAFE_SLUG_REGEX.test(stored)) return stored;
+      } catch (e) {}
+
+      return TENANT_SLUG;
     }
 
     function isLoggedIn() {
@@ -1502,7 +1535,9 @@
 
       try {
         const queryParams = new URLSearchParams();
+        queryParams.set('tenant', activeSlug);
         queryParams.set('subdomain', activeSlug);
+        queryParams.set('slug', activeSlug);
         queryParams.set('limit', '100');
         if (currentBrand && currentBrand !== 'ALL') queryParams.set('brand', currentBrand);
         if (currentCategory && currentCategory !== 'ALL') queryParams.set('category', currentCategory);
@@ -1521,7 +1556,11 @@
         ];
 
         const token = localStorage.getItem('token');
-        const headers = { 'Accept': 'application/json', 'X-Tenant-Slug': activeSlug };
+        const headers = { 
+          'Accept': 'application/json', 
+          'x-tenant-slug': activeSlug,
+          'X-Tenant-Slug': activeSlug 
+        };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         for (const targetUrl of candidateEndpoints) {
