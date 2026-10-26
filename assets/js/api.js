@@ -1736,12 +1736,14 @@
       const isLoginEndpoint = url.includes('/auth/login') || url.includes('/auth/tenant-login') || url.includes('/auth/customer-login');
       const isStoreContext = (typeof window !== 'undefined' && window.location && (
         window.location.pathname.endsWith('store.html') ||
+        window.location.pathname.endsWith('index.html') ||
         window.location.pathname === '/' ||
-        window.location.pathname.endsWith('/store')
-      )) || url.includes('/store/products') || url.includes('/store/bank-info') || url.includes('/store/tenant-info');
+        window.location.pathname.endsWith('/store') ||
+        !window.location.pathname.includes('admin')
+      )) || url.includes('/store/');
 
       if ((response.status === 401 || response.status === 403) && !isLoginEndpoint) {
-        // 1. ADIM & 2. ADIM: Müşteri vitrininde (store.html) asla genel SaaS login.html sayfasına yönlendirme!
+        // Müşteri vitrininde (storefront-ui / index.html) asla genel SaaS login.html sayfasına yönlendirme!
         if (isStoreContext) {
           console.warn(`[API] Vitrinde yetkisiz/oturumsuz istek (${response.status}). Ziyaretçi modunda kalınacak.`);
           if (response.status === 401) {
@@ -1784,8 +1786,10 @@
   function requireAuth(allowedRoles = []) {
     const isStorePage = typeof window !== 'undefined' && window.location && (
       window.location.pathname.endsWith('store.html') ||
+      window.location.pathname.endsWith('index.html') ||
       window.location.pathname === '/' ||
-      window.location.pathname.endsWith('/store')
+      window.location.pathname.endsWith('/store') ||
+      !window.location.pathname.includes('admin')
     );
 
     const token = localStorage.getItem('token');
@@ -1823,7 +1827,7 @@
         } else if (user.role === 'CUSTOMER') {
           const storeUrl = (typeof window !== 'undefined' && window.location && window.location.pathname.includes('/saas-panel-ui'))
             ? '../storefront-ui/store.html'
-            : 'store.html';
+            : (window.location.pathname.endsWith('index.html') ? 'index.html' : 'store.html');
           window.location.href = storeUrl;
         } else {
           window.location.href = 'login.html';
@@ -1840,7 +1844,7 @@
    * 1. ADIM: Çıkış (Logout) Yönlendirmesinin Ayrıştırılması
    * store.html (Müşteri Vitrini) içerisindeyken kullanıcı çıkış yaptığında token'ı sil,
    * ancak onu genel SaaS login.html sayfasına YÖNLENDİRME.
-   * Bunun yerine vitrin ana sayfasına (store.html) ziyaretçi statüsünde yönlendir.
+   * Bunun yerine vitrin ana sayfasına (index.html / store.html) ziyaretçi statüsünde yönlendir.
    */
   function logout(redirectTarget = null) {
     localStorage.removeItem('token');
@@ -1848,15 +1852,20 @@
 
     const isStorePage = typeof window !== 'undefined' && window.location && (
       window.location.pathname.endsWith('store.html') ||
+      window.location.pathname.endsWith('index.html') ||
       window.location.pathname === '/' ||
-      window.location.pathname.endsWith('/store')
+      window.location.pathname.endsWith('/store') ||
+      !window.location.pathname.includes('admin')
     );
 
     if (redirectTarget) {
       window.location.href = redirectTarget;
     } else if (isStorePage) {
       const search = window.location.search || '';
-      window.location.href = 'store.html' + search;
+      const targetPage = (typeof window !== 'undefined' && window.location && window.location.pathname.endsWith('index.html'))
+        ? 'index.html'
+        : 'store.html';
+      window.location.href = targetPage + search;
     } else {
       window.location.href = 'login.html';
     }

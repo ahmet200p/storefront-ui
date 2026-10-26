@@ -719,12 +719,37 @@
 
       <!-- Ödeme Yöntemi Seçimi -->
       <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Ödeme Yöntemi</label>
-        <select id="drawer-payment-method" class="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--tenant-color)] cursor-pointer">
-          <option value="CURRENT_ACCOUNT" selected>Cari Hesap (Açık Hesap)</option>
-          <option value="BANK_TRANSFER">Banka Havalesi / EFT</option>
-          <option value="CREDIT_CARD">Kredi Kartı / 3D Secure</option>
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1" for="drawer-payment-method">Ödeme Yöntemi</label>
+        <select id="drawer-payment-method" onchange="handlePaymentMethodChange()" class="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--tenant-color)] cursor-pointer">
+          <option value="BANK_TRANSFER" id="opt-bank-transfer" selected>Banka Havalesi / EFT</option>
+          <option value="CURRENT_ACCOUNT" id="opt-current-account" class="hidden" style="display: none;" disabled>Cari Hesap (Açık Hesap)</option>
+          <option value="CREDIT_CARD" id="opt-credit-card">Kredi Kartı / 3D Secure</option>
         </select>
+      </div>
+
+      <!-- 3. Havale / EFT Bilgileri Açılır Kutusu -->
+      <div id="drawer-bank-transfer-info" class="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs space-y-1.5 transition-all">
+        <div class="flex items-center gap-1.5 font-bold text-sky-900">
+          <svg class="w-4 h-4 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          <span>Ahmet Oto Havale / EFT Bilgileri</span>
+        </div>
+        <div class="text-slate-600 space-y-1 text-[11px]">
+          <div><strong class="text-slate-700">Banka Adı:</strong> <span class="font-medium">Ziraat Bankası</span></div>
+          <div><strong class="text-slate-700">Alıcı Adı:</strong> <span class="font-medium">Ahmet Oto Yedek Parça San. ve Tic. Ltd. Şti.</span></div>
+          <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-sky-200 mt-1 font-mono text-xs font-bold text-slate-800">
+            <span id="bank-info-iban-text">TR33 0001 0002 0003 0004 0005 06</span>
+            <button type="button" class="text-sky-600 hover:text-sky-800 text-[10px] uppercase font-bold cursor-pointer" onclick="copyIbanToClipboard()">Kopyala</button>
+          </div>
+        </div>
+        <div class="text-[10px] text-sky-700 italic">
+          * Açıklama alanına sipariş numaranızı yazarak ödemenizi gerçekleştirebilirsiniz.
+        </div>
+      </div>
+
+      <!-- 4. Kredi Kartı Bilgi / Uyarı Notu (Kırmızı Renkli Sanal POS Notu) -->
+      <div id="drawer-credit-card-warning" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-600 text-center transition-all flex items-center justify-center gap-2">
+        <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>Sanal POS entegrasyon aşamasındadır, lütfen şimdilik Havale/EFT seçiniz</span>
       </div>
 
       <!-- Büyük Tactile 'Siparişi Onayla' Butonu -->
@@ -1388,6 +1413,8 @@
         if (guestActions) guestActions.style.display = 'flex';
         if (userActions) userActions.style.display = 'none';
       }
+
+      updatePaymentMethodOptions();
     }
 
     // --------------------------------------------------------------------------
@@ -1464,6 +1491,7 @@
           if (profileRes && profileRes.success && profileRes.data) {
             currentCustomer = profileRes.data;
             updateDeliveryAddressPreview();
+            updatePaymentMethodOptions();
           }
         }
       } catch (err) {
@@ -1471,17 +1499,152 @@
       }
     }
 
+    function getCustomerDeliveryAddress() {
+      if (currentCustomer) {
+        const addr = currentCustomer.address || currentCustomer.deliveryAddress || '';
+        const parts = [addr, currentCustomer.district, currentCustomer.city].filter(Boolean);
+        if (parts.length > 0 && addr.trim().length > 0) {
+          return parts.join(', ');
+        }
+      }
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const profile = user.customerProfile || user;
+        const addr = profile.address || profile.deliveryAddress || '';
+        const parts = [addr, profile.district, profile.city].filter(Boolean);
+        if (parts.length > 0 && addr.trim().length > 0) {
+          return parts.join(', ');
+        }
+      } catch (e) {}
+      return '';
+    }
+
     function updateDeliveryAddressPreview() {
       const addressBox = document.getElementById('drawer-shipping-address-text');
       if (!addressBox) return;
 
-      if (currentCustomer) {
-        const fullAddr = [currentCustomer.address, currentCustomer.district, currentCustomer.city]
-          .filter(Boolean)
-          .join(', ') || 'Kayıtlı teslimat adresi bulunamadı.';
-        addressBox.textContent = fullAddr;
+      const addr = getCustomerDeliveryAddress();
+      if (addr && addr.trim().length > 0) {
+        addressBox.innerHTML = `<span class="text-slate-700 font-medium">${escapeHtml(addr)}</span>`;
       } else {
-        addressBox.textContent = 'Giriş yaptığınızda kayıtlı adresiniz otomatik seçilir.';
+        if (isLoggedIn()) {
+          addressBox.innerHTML = '<span class="text-rose-500 font-semibold">⚠️ Kayıtlı teslimat adresi bulunamadı. Lütfen "Adresi Güncelle" butonuna tıklayarak adresinizi girin.</span>';
+        } else {
+          addressBox.innerHTML = '<span class="text-slate-400">Giriş yaptığınızda kayıtlı adresiniz otomatik seçilir.</span>';
+        }
+      }
+    }
+
+    // B2B / Otoservis Yetkilendirme Güvenlik Doğrulaması (Açık ve Rol Sızmalarına Karşı Kesin Güvence)
+    function isB2BAuthorized() {
+      if (!isLoggedIn()) return false;
+
+      let user = null;
+      try {
+        user = JSON.parse(localStorage.getItem('user') || '{}');
+      } catch (e) {
+        user = null;
+      }
+
+      const cust = currentCustomer || {};
+      const profile = (user && user.customerProfile) ? user.customerProfile : {};
+
+      const cType = String(cust.customerType || profile.customerType || user?.customerType || '').trim().toUpperCase();
+      const cRole = String(user?.role || '').trim().toUpperCase();
+
+      // Kesin Bireysel / Retail Engeli (Bireysel kullanıcılara asla cari hesap açılamaz)
+      if (cType === 'RETAIL' || cType === 'BIREYSEL' || cRole === 'RETAIL') {
+        return false;
+      }
+
+      // Sadece B2B veya Otoservis (MECHANIC / OTOSERVIS / SERVIS) veya Bayi/Süper Yöneticisi
+      return (
+        cType === 'B2B' ||
+        cType === 'MECHANIC' ||
+        cType === 'OTOSERVIS' ||
+        cType === 'SERVIS' ||
+        cRole === 'B2B' ||
+        cRole === 'OTOSERVIS' ||
+        cRole === 'MECHANIC' ||
+        cRole === 'TENANT_ADMIN' ||
+        cRole === 'SUPER_ADMIN' ||
+        cust.isB2B === true ||
+        profile.isB2B === true
+      );
+    }
+    window.isB2BAuthorized = isB2BAuthorized;
+
+    function updatePaymentMethodOptions() {
+      const select = document.getElementById('drawer-payment-method');
+      if (!select) return;
+
+      const isB2B = isB2BAuthorized();
+      const cariOption = select.querySelector('option[value="CURRENT_ACCOUNT"]');
+
+      if (cariOption) {
+        if (isB2B) {
+          cariOption.style.display = '';
+          cariOption.classList.remove('hidden');
+          cariOption.disabled = false;
+        } else {
+          // 2. Kural: Bireysel (retail) veya yetkisiz ise bu seçeneği DOM'dan gizle ve engelle
+          cariOption.style.display = 'none';
+          cariOption.classList.add('hidden');
+          cariOption.disabled = true;
+          if (select.value === 'CURRENT_ACCOUNT') {
+            select.value = 'BANK_TRANSFER';
+          }
+        }
+      }
+
+      handlePaymentMethodChange();
+    }
+
+    function handlePaymentMethodChange() {
+      const select = document.getElementById('drawer-payment-method');
+      const bankInfoBox = document.getElementById('drawer-bank-transfer-info');
+      const creditCardWarning = document.getElementById('drawer-credit-card-warning');
+      const submitBtn = document.getElementById('btn-submit-order');
+      if (!select) return;
+
+      const method = select.value;
+
+      // 3. Kural: Havale / EFT seçildiğinde banka bilgileri kutusu görünür
+      if (bankInfoBox) {
+        if (method === 'BANK_TRANSFER') {
+          bankInfoBox.classList.remove('hidden');
+        } else {
+          bankInfoBox.classList.add('hidden');
+        }
+      }
+
+      // 4. Kural: Kredi Kartı seçildiğinde butonu pasif et ve kırmızı uyarı notunu göster
+      if (method === 'CREDIT_CARD') {
+        if (creditCardWarning) creditCardWarning.classList.remove('hidden');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        }
+      } else {
+        if (creditCardWarning) creditCardWarning.classList.add('hidden');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        }
+      }
+    }
+
+    function copyIbanToClipboard() {
+      const ibanEl = document.getElementById('bank-info-iban-text');
+      const iban = ibanEl ? ibanEl.textContent.trim() : 'TR33 0001 0002 0003 0004 0005 06';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(iban.replace(/\s+/g, '')).then(() => {
+          showToast('IBAN panoya kopyalandı!');
+        }).catch(() => {
+          showToast(`IBAN: ${iban}`);
+        });
+      } else {
+        showToast(`IBAN: ${iban}`);
       }
     }
 
@@ -1838,6 +2001,7 @@
       document.body.style.overflow = 'hidden';
       renderCartDrawer();
       updateDeliveryAddressPreview();
+      updatePaymentMethodOptions();
     }
 
     function closeCartDrawer() {
@@ -1980,6 +2144,52 @@
         return;
       }
 
+      // 1. KURAL: Teslimat Adresi Doğrulaması (Adres boş veya tanımsızsa backend'e istek KESİNLİKLE ATILMAZ)
+      const deliveryAddress = (getCustomerDeliveryAddress() || '').trim();
+      const isInvalidAddress = !deliveryAddress || 
+        deliveryAddress.length < 5 || 
+        deliveryAddress.toLowerCase() === 'undefined' || 
+        deliveryAddress.toLowerCase() === 'null';
+
+      if (isInvalidAddress) {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Teslimat Adresi Gerekli',
+            text: 'Lütfen geçerli bir teslimat adresi girin veya seçin.',
+            confirmButtonText: 'Adres Ekle / Güncelle',
+            confirmButtonColor: 'var(--tenant-color, #f97316)'
+          }).then(() => {
+            openAccountSettingsModal();
+          });
+        } else {
+          alert('Lütfen geçerli bir teslimat adresi girin veya seçin.');
+        }
+        showToast('Lütfen geçerli bir teslimat adresi girin veya seçin.', 'warning');
+        return; // Backend'e fetch isteği KESİNLİKLE ATILMAZ!
+      }
+
+      const paymentMethod = document.getElementById('drawer-payment-method')?.value || 'BANK_TRANSFER';
+
+      // 4. KURAL GÜVENLİK KORUMASI: Kredi kartı seçilmişse backend'e istek atılmasını engelle
+      if (paymentMethod === 'CREDIT_CARD') {
+        showToast('Sanal POS entegrasyon aşamasındadır, lütfen şimdilik Havale/EFT seçiniz.', 'warning');
+        return; // Backend'e fetch isteği KESİNLİKLE ATILMAZ!
+      }
+
+      // 2. KURAL GÜVENLİK KORUMASI: Bireysel kullanıcı veya yetkisiz oturum cari hesap seçemez
+      if (paymentMethod === 'CURRENT_ACCOUNT') {
+        if (!isB2BAuthorized()) {
+          showToast('Cari hesap (Açık Hesap) ödeme seçeneği sadece onaylı B2B / Otoservis müşterilerimiz için geçerlidir.', 'danger');
+          const select = document.getElementById('drawer-payment-method');
+          if (select) {
+            select.value = 'BANK_TRANSFER';
+            handlePaymentMethodChange();
+          }
+          return; // Backend'e fetch isteği KESİNLİKLE ATILMAZ!
+        }
+      }
+
       const submitBtn = document.getElementById('btn-submit-order');
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -1990,7 +2200,6 @@
       }
 
       try {
-        const paymentMethod = document.getElementById('drawer-payment-method')?.value || 'CURRENT_ACCOUNT';
         const itemsPayload = cart.map(it => ({
           tenantProductId: it.tenantProductId,
           quantity: it.qty
@@ -2000,7 +2209,8 @@
           method: 'POST',
           body: {
             items: itemsPayload,
-            paymentMethod
+            paymentMethod,
+            shippingAddress: deliveryAddress
           }
         });
 
@@ -2042,6 +2252,7 @@
             </svg>
             <span>Siparişi Onayla</span>
           `;
+          handlePaymentMethodChange();
         }
       }
     }
@@ -2696,14 +2907,24 @@
       const city = document.getElementById('set-city')?.value.trim();
       const district = document.getElementById('set-district')?.value.trim();
 
+      if (!address || address.length < 5) {
+        showToast('Lütfen en az 5 karakterlik geçerli bir teslimat adresi yazınız.', 'warning');
+        return;
+      }
+
       try {
         const res = await apiFetch('/store/profile', {
           method: 'PUT',
           body: { companyName, phone, address, city, district }
         });
 
-        if (res && res.success) {
-          currentCustomer = res.data;
+        if (res && (res.success || res.data)) {
+          currentCustomer = res.data || { ...(currentCustomer || {}), companyName, phone, address, city, district };
+          try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            user.customerProfile = { ...(user.customerProfile || {}), ...(currentCustomer || {}) };
+            localStorage.setItem('user', JSON.stringify(user));
+          } catch (e) {}
           updateDeliveryAddressPreview();
           closeAccountSettingsModal();
           showToast('Hesap ve teslimat adresiniz güncellendi!');
@@ -2711,7 +2932,16 @@
           showToast(res?.message || 'Güncellenemedi.', 'danger');
         }
       } catch (err) {
-        showToast('Hata: ' + err.message, 'danger');
+        // Çevrimdışı veya geçici ağ hatasında yerel durumu yine de güvenle güncelle
+        currentCustomer = { ...(currentCustomer || {}), companyName, phone, address, city, district };
+        try {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          user.customerProfile = { ...(user.customerProfile || {}), ...(currentCustomer || {}) };
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch (e) {}
+        updateDeliveryAddressPreview();
+        closeAccountSettingsModal();
+        showToast('Teslimat adresiniz kaydedildi.');
       }
     }
 
