@@ -1,1 +1,7 @@
-"Backend'in ürünleri listelemek için x-tenant-slug özel HTTP header'ını beklediğini tespit ettik. Lütfen vitrin projesindeki (store.js, api.js veya ilgili fetch/axios dosyası) ürün çekme fonksiyonlarını güncelle. İsteklerin headers nesnesine Ahmet Oto için x-tenant-slug: 'ahmetoto' değerini kalıcı olarak ekle. Katalog ürünlerini getiren GET isteğinin bu header ile backend'e ulaştığından emin ol."
+Konsol loglarında store.html ve api.js kaynaklı çoklu API hataları var. Proje headless mimaride çalıştığı için eski otomatik subdomain algılama mantığı çöküyor. Lütfen vitrin tarafındaki API altyapısını şu şekilde düzelt:
+
+Otomatik tenant bulma (URL'den veya host'tan tenant çıkarma) mantığını tamamen iptal et. Kodun en üstüne const TENANT_SLUG = 'ahmetoto'; şeklinde sabit bir kimlik tanımla.
+
+Kendi Netlify domainine istek atmasını engelle. API_BASE değerini kesin ve sabit olarak '[https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api](https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api)' olarak ayarla.
+
+400 Bad Request hatasını çözmek için, GET /api/store/products (ve diğer tüm store endpoint'leri) isteklerine TENANT_SLUG değerini hem Header ('x-tenant-slug': TENANT_SLUG) olarak ekle, hem de garantilemek için URL parametresi (?tenant=ahmetoto) olarak geçir.

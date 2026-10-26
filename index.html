@@ -1212,6 +1212,12 @@
     const TENANT_SLUG = 'ahmetoto';
     const SAFE_SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 
+    // Kendi Netlify domainine istek atmasını kesin olarak engelle:
+    const API_BASE = 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api';
+    window.API_BASE = API_BASE;
+    window.API_BASE_URL = API_BASE;
+    window.TENANT_SLUG = TENANT_SLUG;
+
     // ==========================================================================
     // API İSTEMCİSİ VE GLOBAL GÜVENCE (ReferenceError & Anti-Hacker Fallback)
     // ==========================================================================
@@ -1222,24 +1228,25 @@
       console.warn('[Storefront] window.apiFetch henüz yüklenmedi, yerel fallback apiFetch devrede.');
       const token = localStorage.getItem('token');
       const defaultHeaders = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-tenant-slug': TENANT_SLUG,
+        'X-Tenant-Slug': TENANT_SLUG
       };
       if (token) {
         defaultHeaders['Authorization'] = `Bearer ${token}`;
       }
       
-      const slug = (typeof getStoreSubdomain === 'function') ? getStoreSubdomain() : TENANT_SLUG;
-      defaultHeaders['x-tenant-slug'] = slug;
-      defaultHeaders['X-Tenant-Slug'] = slug;
-
-      const baseUrl = (window.API_BASE_URL || window.API_BASE || 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api').replace(/\/+$/, '');
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
-      let targetUrl = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? `https://saas-g-ncel-10-10-2026simdi-main.onrender.com${endpoint}` : `${baseUrl}${cleanEndpoint}`);
+      let targetUrl = endpoint.startsWith('http') 
+        ? endpoint 
+        : (cleanEndpoint.startsWith('/api') 
+            ? `https://saas-g-ncel-10-10-2026simdi-main.onrender.com${cleanEndpoint}` 
+            : `${API_BASE}${cleanEndpoint}`);
 
       // Vitrin ve ürün isteklerinde query parametresine de güvenli tenant bilgisi ekle
-      if ((targetUrl.includes('/store/') || targetUrl.includes('/products') || targetUrl.includes('/catalog/')) && !targetUrl.includes('tenant=') && !targetUrl.includes('subdomain=')) {
+      if ((targetUrl.includes('/store/') || targetUrl.includes('/products') || targetUrl.includes('/catalog/')) && !targetUrl.includes('tenant=')) {
         const separator = targetUrl.includes('?') ? '&' : '?';
-        targetUrl = `${targetUrl}${separator}tenant=${encodeURIComponent(slug)}&subdomain=${encodeURIComponent(slug)}`;
+        targetUrl = `${targetUrl}${separator}tenant=${encodeURIComponent(TENANT_SLUG)}&subdomain=${encodeURIComponent(TENANT_SLUG)}`;
       }
 
       const config = {
@@ -1328,44 +1335,8 @@
       return `${clean} Yedek Parça`;
     }
 
-    // Get current tenant slug from URL or host safely
+    // Headless Mimari Sabit Bayi Kimliği (Otomatik Host/Subdomain Algılama İptal):
     function getStoreSubdomain() {
-      if (typeof window.getResolvedTenantSlug === 'function') {
-        const resolved = window.getResolvedTenantSlug();
-        if (resolved && SAFE_SLUG_REGEX.test(resolved)) return resolved;
-      }
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const qSlug = urlParams.get('tenant') || urlParams.get('subdomain') || urlParams.get('slug');
-        if (qSlug && qSlug.trim()) {
-          const clean = qSlug.trim().toLowerCase();
-          if (SAFE_SLUG_REGEX.test(clean)) {
-            try { localStorage.setItem('tenantSlug', clean); } catch (e) {}
-            return clean;
-          }
-        }
-      } catch (e) {}
-
-      try {
-        const host = window.location.hostname;
-        if (host && host.includes('.')) {
-          const parts = host.split('.');
-          if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'localhost') {
-            const candidate = parts[0].toLowerCase();
-            if (SAFE_SLUG_REGEX.test(candidate)) return candidate;
-          }
-          if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'localhost') {
-            const candidate = parts[0].toLowerCase();
-            if (SAFE_SLUG_REGEX.test(candidate)) return candidate;
-          }
-        }
-      } catch (e) {}
-
-      try {
-        const stored = localStorage.getItem('tenantSlug');
-        if (stored && SAFE_SLUG_REGEX.test(stored)) return stored;
-      } catch (e) {}
-
       return TENANT_SLUG;
     }
 
@@ -1549,34 +1520,28 @@
         const queryString = queryParams.toString();
         let res = null;
 
-        const candidateEndpoints = [
-          `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products?${queryString}`,
-          `/api/store/products?${queryString}`,
-          `/api/products?${queryString}`
-        ];
-
+        const liveUrl = `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products?${queryString}`;
         const token = localStorage.getItem('token');
         const headers = { 
           'Accept': 'application/json', 
-          'x-tenant-slug': activeSlug,
-          'X-Tenant-Slug': activeSlug 
+          'x-tenant-slug': TENANT_SLUG,
+          'X-Tenant-Slug': TENANT_SLUG 
         };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        for (const targetUrl of candidateEndpoints) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            const response = await fetch(targetUrl, { method: 'GET', headers, signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.ok) {
-              const data = await response.json();
-              if (data && (data.success || Array.isArray(data.data))) {
-                res = data;
-                break;
-              }
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const response = await fetch(liveUrl, { method: 'GET', headers, signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && (data.success || Array.isArray(data.data))) {
+              res = data;
             }
-          } catch (e) {}
+          }
+        } catch (e) {
+          console.warn('[Storefront] Canlı direkt fetch yanıt vermedi, apiFetch deneniyor:', e);
         }
 
         if (!res && typeof apiFetch === 'function') {
