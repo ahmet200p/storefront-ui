@@ -151,7 +151,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
       
       <!-- Sol: Dinamik Bayi Logosu & Ünvanı -->
-      <a href="store.html" class="flex items-center gap-3.5 group flex-shrink-0" id="dealer-brand-link" title="Ana Sayfaya Dön">
+      <a href="index.html" class="flex items-center gap-3.5 group flex-shrink-0" id="dealer-brand-link" title="Ana Sayfaya Dön">
         <div class="w-12 h-12 rounded-2xl bg-[var(--tenant-color)]/10 border border-[var(--tenant-color)]/25 flex items-center justify-center text-[var(--tenant-color)] shadow-xs group-hover:scale-105 transition-transform overflow-hidden" id="dealer-logo-container">
           <svg id="dealer-default-emblem" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H8.5a1 1 0 0 0-.8.4L5 11l-5.16.86a1 1 0 0 0-.84.99V16h3m10 0a2.5 2.5 0 1 1-5 0m10 0a2.5 2.5 0 1 1-5 0"></path>
@@ -2733,10 +2733,28 @@
     }
 
     function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = 'store.html';
+      // 1. ADIM: Tüm yerel kimlik, token ve oturum verilerini eksiksiz temizle (Bilgi Sızıntısını Önleme)
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('jwt');
+        localStorage.removeItem('customerProfile');
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('[LOGOUT_CLEANUP_WARN]:', e);
+      }
+
+      // 2. ADIM: Bellekteki hassas kullanıcı ve bildirim durumlarını sıfırla
+      currentCustomer = null;
+      userNotificationsCache = [];
+
+      // 3. ADIM: Netlify ve yerel dosya ortamında 404 veren olmayan sayfalar yerine doğrudan ana vitrine yönlendir
+      const isFileProtocol = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
+      const targetPage = isFileProtocol ? 'index.html' : (window.location.pathname.endsWith('index.html') ? 'index.html' : '/');
+      window.location.href = targetPage;
     }
+    window.logout = logout;
 
     // Modal aç/kapa yardımcıları
     function openCurrentAccountModal() {

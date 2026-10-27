@@ -1760,7 +1760,10 @@
         console.warn(`[API] Yetkisiz erişim (${response.status}). Giriş sayfasına yönlendiriliyor...`);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = 'login.html';
+        const fallbackLogin = (typeof window !== 'undefined' && window.location && !window.location.pathname.includes('admin'))
+          ? (window.location.pathname.endsWith('index.html') ? 'index.html' : '/')
+          : 'login.html';
+        window.location.href = fallbackLogin;
         return null;
       }
 
@@ -1800,7 +1803,9 @@
         return null;
       }
       console.warn('[AUTH_GUARD] Token veya kullanıcı bilgisi bulunamadı. Giriş sayfasına yönlendiriliyor.');
-      window.location.href = 'login.html';
+      window.location.href = (typeof window !== 'undefined' && window.location && !window.location.pathname.includes('admin'))
+        ? (window.location.pathname.endsWith('index.html') ? 'index.html' : '/')
+        : 'login.html';
       return null;
     }
 
@@ -1813,7 +1818,9 @@
       if (isStorePage) {
         return null;
       }
-      window.location.href = 'login.html';
+      window.location.href = (typeof window !== 'undefined' && window.location && !window.location.pathname.includes('admin'))
+        ? (window.location.pathname.endsWith('index.html') ? 'index.html' : '/')
+        : 'login.html';
       return null;
     }
 
@@ -1826,11 +1833,11 @@
           window.location.href = 'bayi.html';
         } else if (user.role === 'CUSTOMER') {
           const storeUrl = (typeof window !== 'undefined' && window.location && window.location.pathname.includes('/saas-panel-ui'))
-            ? '../storefront-ui/store.html'
-            : (window.location.pathname.endsWith('index.html') ? 'index.html' : 'store.html');
+            ? '../storefront-ui/index.html'
+            : (window.location.pathname.endsWith('index.html') ? 'index.html' : '/');
           window.location.href = storeUrl;
         } else {
-          window.location.href = 'login.html';
+          window.location.href = (window.location.pathname.endsWith('index.html') ? 'index.html' : '/');
         }
         return null;
       }
@@ -1841,34 +1848,50 @@
 
   /**
    * logout:
-   * 1. ADIM: Çıkış (Logout) Yönlendirmesinin Ayrıştırılması
-   * store.html (Müşteri Vitrini) içerisindeyken kullanıcı çıkış yaptığında token'ı sil,
-   * ancak onu genel SaaS login.html sayfasına YÖNLENDİRME.
-   * Bunun yerine vitrin ana sayfasına (index.html / store.html) ziyaretçi statüsünde yönlendir.
+   * Güvenli Çıkış (Safe Session Invalidation):
+   * 1. Token, kullanıcı ve yetki verilerini LocalStorage ve SessionStorage üzerinden tamamen siler.
+   * 2. Açık Yönlendirme (Open Redirect) zafiyetlerine karşı dış linkleri kesinlikle engeller.
+   * 3. Netlify'da 404 veren olmayan sayfalara (store.html, login.html vb.) yönlendirmeyi önler;
+   *    doğrudan ana vitrin sayfasına (/ veya index.html) yönlendirir.
    */
   function logout(redirectTarget = null) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    const isStorePage = typeof window !== 'undefined' && window.location && (
-      window.location.pathname.endsWith('store.html') ||
-      window.location.pathname.endsWith('index.html') ||
-      window.location.pathname === '/' ||
-      window.location.pathname.endsWith('/store') ||
-      !window.location.pathname.includes('admin')
-    );
-
-    if (redirectTarget) {
-      window.location.href = redirectTarget;
-    } else if (isStorePage) {
-      const search = window.location.search || '';
-      const targetPage = (typeof window !== 'undefined' && window.location && window.location.pathname.endsWith('index.html'))
-        ? 'index.html'
-        : 'store.html';
-      window.location.href = targetPage + search;
-    } else {
-      window.location.href = 'login.html';
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('customerProfile');
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn('[LOGOUT_STORAGE_CLEAR_WARN]:', e);
     }
+
+    // Açık Yönlendirme (Open Redirect) güvenlik kontrolü:
+    // Dış alan adlarına (http, https, //) ve tehlikeli şemalara (javascript:) izin verilmez.
+    let safeRedirect = null;
+    if (redirectTarget && typeof redirectTarget === 'string') {
+      const trimmed = redirectTarget.trim();
+      const isUnsafe = (
+        trimmed.startsWith('//') ||
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('javascript:') ||
+        trimmed.includes('login.html') ||
+        trimmed.includes('store.html')
+      );
+      if (!isUnsafe && (trimmed === '/' || trimmed === 'index.html' || trimmed.endsWith('index.html'))) {
+        safeRedirect = trimmed;
+      }
+    }
+
+    if (safeRedirect) {
+      window.location.href = safeRedirect;
+      return;
+    }
+
+    const isFileProtocol = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
+    const targetPage = isFileProtocol ? 'index.html' : (window.location.pathname.endsWith('index.html') ? 'index.html' : '/');
+    window.location.href = targetPage;
   }
 
   // Sistemdeki tüm panellerdeki (admin.html, bayi.html vb.) 'Çıkış Yap' butonlarına otomatik bağlanma
