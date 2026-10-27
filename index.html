@@ -78,6 +78,26 @@
       z-index: 99999 !important;
     }
 
+    /* Bento Grid ve Genel İçerik için Şık Kaydırma Çubuğu */
+    .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(161, 161, 170, 0.4) transparent;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(161, 161, 170, 0.35);
+      border-radius: 9999px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: rgba(113, 113, 122, 0.6);
+    }
+
     /* 5. MİKRO ETKİLEŞİMLER (Staggered Fade-In-Up Keyframes) */
     @keyframes fadeInUp {
       from {
@@ -396,7 +416,7 @@
             <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Araç Markası</label>
             <span class="text-[10px] text-zinc-400 font-medium">Bento Seçim</span>
           </div>
-          <div class="brands-grid-wrap grid grid-cols-3 gap-2" id="brand-pills-container">
+          <div class="brands-grid-wrap grid grid-cols-3 gap-2 max-h-80 overflow-y-auto scrollbar-thin pr-1 p-0.5" id="brand-pills-container">
             <!-- 1. Tümü -->
             <button type="button" class="brand-tile active group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-zinc-900 text-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="ALL" onclick="filterByBrand('ALL'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-white mb-1">
@@ -408,7 +428,7 @@
             <!-- 2. Renault -->
             <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Renault" onclick="filterByBrand('Renault'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L18.5 12L12 22L5.5 12L12 2Z"></path><path d="M12 6L15.5 12L12 18L8.5 12L12 6Z"></path></svg>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L18.5 12L12 22L5.5 12L12 6Z"></path><path d="M12 6L15.5 12L12 18L8.5 12L12 6Z"></path></svg>
               </div>
               <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Renault</span>
             </button>
@@ -453,15 +473,31 @@
               <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Mercedes</span>
             </button>
 
-            <!-- 8. Dacia -->
-            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Dacia" onclick="filterByBrand('Dacia'); handleBrandClick(this);">
+            <!-- 8. Audi -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Audi" onclick="filterByBrand('Audi'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h4a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"></path><path d="M19 8h-4a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4h4"></path></svg>
+                <svg class="w-5 h-4" viewBox="0 0 32 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="8" r="4.5"></circle><circle cx="13" cy="8" r="4.5"></circle><circle cx="19" cy="8" r="4.5"></circle><circle cx="25" cy="8" r="4.5"></circle></svg>
               </div>
-              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Dacia</span>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Audi</span>
             </button>
 
-            <!-- 9. Peugeot -->
+            <!-- 9. Skoda -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Skoda" onclick="filterByBrand('Skoda'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><path d="M7 14l5-5 5 5"></path><path d="M12 9v8"></path><circle cx="12" cy="6" r="1" fill="currentColor"></circle></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Skoda</span>
+            </button>
+
+            <!-- 10. Seat -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Seat" onclick="filterByBrand('Seat'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 6H9a3 3 0 0 0-3 3v0a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3H7"></path><line x1="7" y1="6" x2="17" y2="6"></line></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Seat</span>
+            </button>
+
+            <!-- 11. Peugeot -->
             <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Peugeot" onclick="filterByBrand('Peugeot'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12l2 6-8 12-8-12z"></path><path d="M11 8l2 3-1 3"></path></svg>
@@ -469,7 +505,7 @@
               <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Peugeot</span>
             </button>
 
-            <!-- 10. Opel -->
+            <!-- 12. Opel -->
             <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Opel" onclick="filterByBrand('Opel'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><path d="M4 11h9l-5 4h12" stroke-width="2"></path></svg>
@@ -477,7 +513,7 @@
               <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Opel</span>
             </button>
 
-            <!-- 11. Toyota -->
+            <!-- 13. Toyota -->
             <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Toyota" onclick="filterByBrand('Toyota'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="10" ry="7"></ellipse><ellipse cx="12" cy="10" rx="4.5" ry="3"></ellipse><ellipse cx="12" cy="13" rx="2.5" ry="5.5"></ellipse></svg>
@@ -485,12 +521,132 @@
               <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Toyota</span>
             </button>
 
-            <!-- 12. Hyundai -->
+            <!-- 14. Hyundai -->
             <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Hyundai" onclick="filterByBrand('Hyundai'); handleBrandClick(this);">
               <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="10" ry="7"></ellipse><path d="M8 8v8M16 8v8M8 12h8" transform="skewX(-15) translate(3, 0)"></path></svg>
               </div>
               <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Hyundai</span>
+            </button>
+
+            <!-- 15. Honda -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Honda" onclick="filterByBrand('Honda'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16l-2 16H6L4 4z"></path><path d="M8 7v10M16 7v10M8 12h8" stroke-width="2"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Honda</span>
+            </button>
+
+            <!-- 16. Nissan -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Nissan" onclick="filterByBrand('Nissan'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><rect x="3" y="10" width="18" height="4" rx="1" fill="currentColor" fill-opacity="0.2"></rect><text x="12" y="13.2" text-anchor="middle" font-size="4" font-weight="bold" fill="currentColor" stroke="none">NISSAN</text></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Nissan</span>
+            </button>
+
+            <!-- 17. Kia -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Kia" onclick="filterByBrand('Kia'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="6"></ellipse><text x="12" y="14" text-anchor="middle" font-size="6" font-weight="900" letter-spacing="1" fill="currentColor" stroke="none">KIA</text></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Kia</span>
+            </button>
+
+            <!-- 18. Citroen -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Citroen" onclick="filterByBrand('Citroen'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 10l6-5 6 5"></path><path d="M6 17l6-5 6 5"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Citroen</span>
+            </button>
+
+            <!-- 19. Dacia -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Dacia" onclick="filterByBrand('Dacia'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h4a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"></path><path d="M19 8h-4a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4h4"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Dacia</span>
+            </button>
+
+            <!-- 20. Chery -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Chery" onclick="filterByBrand('Chery'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="10" ry="6.5"></ellipse><path d="M7 15l5-7 5 7M10 13h4"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Chery</span>
+            </button>
+
+            <!-- 21. Volvo -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Volvo" onclick="filterByBrand('Volvo'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="13" r="8"></circle><line x1="16" y1="8" x2="21" y2="3"></line><polyline points="16 3 21 3 21 8"></polyline><text x="11" y="14.5" text-anchor="middle" font-size="3.5" font-weight="bold" fill="currentColor" stroke="none">VOLVO</text></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Volvo</span>
+            </button>
+
+            <!-- 22. Land Rover -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Land Rover" onclick="filterByBrand('Land Rover'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="11" ry="6"></ellipse><text x="12" y="13" text-anchor="middle" font-size="4" font-weight="bold" fill="currentColor" stroke="none">ROVER</text></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Land Rover</span>
+            </button>
+
+            <!-- 23. Alfa Romeo -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Alfa Romeo" onclick="filterByBrand('Alfa Romeo'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="4" y1="8" x2="12" y2="8"></line><path d="M15 6c2 1 2 4 0 6s-2 4 0 6"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Alfa Romeo</span>
+            </button>
+
+            <!-- 24. Jeep -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Jeep" onclick="filterByBrand('Jeep'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"></rect><line x1="6" y1="8" x2="6" y2="16"></line><line x1="8.5" y1="8" x2="8.5" y2="16"></line><line x1="11" y1="8" x2="11" y2="16"></line><line x1="13" y1="8" x2="13" y2="16"></line><line x1="15.5" y1="8" x2="15.5" y2="16"></line><line x1="18" y1="8" x2="18" y2="16"></line></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Jeep</span>
+            </button>
+
+            <!-- 25. Suzuki -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Suzuki" onclick="filterByBrand('Suzuki'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 5L7 11h10L6 19"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Suzuki</span>
+            </button>
+
+            <!-- 26. Mazda -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Mazda" onclick="filterByBrand('Mazda'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="10" ry="7"></ellipse><path d="M6 13c3-3 6-1 6 3 0-4 3-6 6-3"></path></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Mazda</span>
+            </button>
+
+            <!-- 27. Mitsubishi -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Mitsubishi" onclick="filterByBrand('Mitsubishi'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12,2 15,7.5 12,13 9,7.5"></polygon><polygon points="12,13 15,18.5 9,18.5 6,13"></polygon><polygon points="12,13 18,13 21,18.5 15,18.5"></polygon></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Mitsubishi</span>
+            </button>
+
+            <!-- 28. Porsche -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Porsche" onclick="filterByBrand('Porsche'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14l-2 11-5 6-5-6L5 4z"></path><line x1="12" y1="4" x2="12" y2="21"></line><line x1="5" y1="11" x2="19" y2="11"></line><circle cx="12" cy="11" r="2.5" fill="currentColor"></circle></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Porsche</span>
+            </button>
+
+            <!-- 29. Mini -->
+            <button type="button" class="brand-tile group relative flex flex-col items-center justify-center p-2.5 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-center" data-brand="Mini" onclick="filterByBrand('Mini'); handleBrandClick(this);">
+              <div class="w-6 h-6 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 mb-1 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"></circle><path d="M2 11h5M17 11h5M3 14h4M17 14h4"></path><text x="12" y="13.5" text-anchor="middle" font-size="4" font-weight="900" fill="currentColor" stroke="none">MINI</text></svg>
+              </div>
+              <span class="text-[10px] font-bold text-zinc-700 group-hover:text-zinc-900 truncate w-full">Mini</span>
             </button>
           </div>
         </div>
@@ -1309,8 +1465,40 @@
     };
 
     // --------------------------------------------------------------------------
-    // GLOBAL STATE YÖNETİMİ
-    // --------------------------------------------------------------------------
+    // Pazardaki Tüm Aktif Araç Markaları Dizisi (Bento Filtre Desteği)
+    const VEHICLE_BRANDS = Object.freeze([
+      { id: 'ALL', name: 'Tümü', shortName: 'Tümü' },
+      { id: 'Renault', name: 'Renault', shortName: 'Renault' },
+      { id: 'Fiat', name: 'Fiat', shortName: 'Fiat' },
+      { id: 'Volkswagen', name: 'Volkswagen', shortName: 'VW' },
+      { id: 'Ford', name: 'Ford', shortName: 'Ford' },
+      { id: 'BMW', name: 'BMW', shortName: 'BMW' },
+      { id: 'Mercedes-Benz', name: 'Mercedes-Benz', shortName: 'Mercedes' },
+      { id: 'Audi', name: 'Audi', shortName: 'Audi' },
+      { id: 'Skoda', name: 'Skoda', shortName: 'Skoda' },
+      { id: 'Seat', name: 'Seat', shortName: 'Seat' },
+      { id: 'Peugeot', name: 'Peugeot', shortName: 'Peugeot' },
+      { id: 'Opel', name: 'Opel', shortName: 'Opel' },
+      { id: 'Toyota', name: 'Toyota', shortName: 'Toyota' },
+      { id: 'Hyundai', name: 'Hyundai', shortName: 'Hyundai' },
+      { id: 'Honda', name: 'Honda', shortName: 'Honda' },
+      { id: 'Nissan', name: 'Nissan', shortName: 'Nissan' },
+      { id: 'Kia', name: 'Kia', shortName: 'Kia' },
+      { id: 'Citroen', name: 'Citroen', shortName: 'Citroen' },
+      { id: 'Dacia', name: 'Dacia', shortName: 'Dacia' },
+      { id: 'Chery', name: 'Chery', shortName: 'Chery' },
+      { id: 'Volvo', name: 'Volvo', shortName: 'Volvo' },
+      { id: 'Land Rover', name: 'Land Rover', shortName: 'Land Rover' },
+      { id: 'Alfa Romeo', name: 'Alfa Romeo', shortName: 'Alfa' },
+      { id: 'Jeep', name: 'Jeep', shortName: 'Jeep' },
+      { id: 'Suzuki', name: 'Suzuki', shortName: 'Suzuki' },
+      { id: 'Mazda', name: 'Mazda', shortName: 'Mazda' },
+      { id: 'Mitsubishi', name: 'Mitsubishi', shortName: 'Mitsubishi' },
+      { id: 'Porsche', name: 'Porsche', shortName: 'Porsche' },
+      { id: 'Mini', name: 'Mini', shortName: 'Mini' }
+    ]);
+    window.VEHICLE_BRANDS = VEHICLE_BRANDS;
+
     let allProducts = [];
     let allProductsData = [];
     let currentBrand = 'ALL';
@@ -2618,21 +2806,41 @@
     }
 
     function filterByBrand(brand) {
-      currentBrand = brand;
+      currentBrand = brand || 'ALL';
       const tiles = document.querySelectorAll('#brand-pills-container button');
       tiles.forEach(p => {
-        if (p.getAttribute('data-brand') === brand) {
+        const isSelected = p.getAttribute('data-brand') === currentBrand;
+        const iconDiv = p.querySelector('div');
+        const textSpan = p.querySelector('span');
+        if (isSelected) {
           p.classList.add('active');
           p.classList.remove('bg-white', 'text-zinc-700');
           p.classList.add('bg-zinc-900', 'text-white', 'border-zinc-900');
+          if (iconDiv) {
+            iconDiv.classList.remove('text-zinc-700');
+            iconDiv.classList.add('text-white');
+          }
+          if (textSpan) {
+            textSpan.classList.remove('text-zinc-700');
+            textSpan.classList.add('text-white');
+          }
         } else {
           p.classList.remove('active', 'bg-zinc-900', 'text-white', 'border-zinc-900');
           p.classList.add('bg-white', 'text-zinc-700');
+          if (iconDiv) {
+            iconDiv.classList.remove('text-white');
+            iconDiv.classList.add('text-zinc-700');
+          }
+          if (textSpan) {
+            textSpan.classList.remove('text-white');
+            textSpan.classList.add('text-zinc-700');
+          }
         }
       });
       updateActiveFilterPill();
       loadProducts();
     }
+    window.filterByBrand = filterByBrand;
 
     function filterByCategory(category) {
       currentCategory = category;
