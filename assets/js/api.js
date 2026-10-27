@@ -531,7 +531,7 @@
     if (cleanEndpoint === '/auth/me' && method === 'GET') {
       let currentUser = null;
       try {
-        currentUser = JSON.parse(localStorage.getItem('user'));
+        currentUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user'));
       } catch (e) {}
       if (currentUser && currentUser.email) {
         const dbUser = (store.users || []).find(u => u.email.toLowerCase() === currentUser.email.toLowerCase()) || currentUser;
@@ -1002,7 +1002,7 @@
     if ((cleanEndpoint === '/tenant/products' || cleanEndpoint === '/tenant/catalog') && method === 'POST') {
       // Onay Kontrolü (requireApprovedDealer)
       let storedUser = null;
-      try { storedUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+      try { storedUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user')); } catch (e) {}
       if (storedUser && storedUser.role !== 'SUPER_ADMIN') {
         const uStatus = storedUser.status || (storedUser.tenant ? storedUser.tenant.status : 'APPROVED');
         if (uStatus === 'PENDING') {
@@ -1682,7 +1682,7 @@
       headers.set('Content-Type', 'application/json');
     }
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${token}`);
     }
@@ -1747,6 +1747,8 @@
         if (isStoreContext) {
           console.warn(`[API] Vitrinde yetkisiz/oturumsuz istek (${response.status}). Ziyaretçi modunda kalınacak.`);
           if (response.status === 401) {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
           }
@@ -1758,6 +1760,8 @@
         }
 
         console.warn(`[API] Yetkisiz erişim (${response.status}). Giriş sayfasına yönlendiriliyor...`);
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         const fallbackLogin = (typeof window !== 'undefined' && window.location && !window.location.pathname.includes('admin'))
@@ -1795,8 +1799,8 @@
       !window.location.pathname.includes('admin')
     );
 
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userStr = sessionStorage.getItem('user');
 
     if (!token || !userStr) {
       if (isStorePage) {
@@ -1813,6 +1817,8 @@
     try {
       user = JSON.parse(userStr);
     } catch (e) {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       if (isStorePage) {
@@ -1894,9 +1900,116 @@
     window.location.href = targetPage;
   }
 
-  // Sistemdeki tüm panellerdeki (admin.html, bayi.html vb.) 'Çıkış Yap' butonlarına otomatik bağlanma
+  // ==========================================================================
+  // GLOBAL İNAKTİVİTE VE OTOMATİK ZAMAN AŞIMI SİSTEMİ (30 DAKİKA)
+  // ==========================================================================
+  const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 Dakika (1.800.000 ms)
+  const INACTIVITY_STORAGE_KEY = 'session_last_activity';
+  let lastActivityThrottled = 0;
+  let isSessionTimeoutTriggered = false;
+
+  function recordUserActivity() {
+    const now = Date.now();
+    if (now - lastActivityThrottled < 5000) return;
+    lastActivityThrottled = now;
+
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      try {
+        sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(now));
+      } catch (e) {}
+    }
+  }
+
+  function checkInactivityTimeout() {
+    const token = sessionStorage.getItem('token');
+    if (!token) return;
+
+    const lastActiveStr = sessionStorage.getItem(INACTIVITY_STORAGE_KEY);
+    const lastActive = parseInt(lastActiveStr, 10);
+    const now = Date.now();
+
+    if (!lastActive || isNaN(lastActive)) {
+      try { sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(now)); } catch (e) {}
+      return;
+    }
+
+    if (now - lastActive >= INACTIVITY_TIMEOUT_MS) {
+      triggerInactivityLogout();
+    }
+  }
+
+  function triggerInactivityLogout() {
+    if (isSessionTimeoutTriggered) return;
+    isSessionTimeoutTriggered = true;
+
+    try {
+      sessionStorage.clear();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('customerProfile');
+    } catch (e) {}
+
+    const msg = 'Güvenlik nedeniyle oturumunuz zaman aşımına uğradı';
+    if (typeof window !== 'undefined' && window.Swal) {
+      window.Swal.fire({
+        icon: 'warning',
+        title: 'Oturum Zaman Aşımı',
+        text: msg,
+        confirmButtonText: 'Tamam',
+        confirmButtonColor: 'var(--tenant-color, #f97316)'
+      }).then(() => {
+        logout();
+      });
+    } else {
+      alert(msg);
+      logout();
+    }
+  }
+
+  function initInactivityWatcher() {
+    if (typeof window === 'undefined') return;
+
+    // Güvenlik Standardı: Kalıcı localStorage token sızıntılarını imha et
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('customerProfile');
+    } catch (e) {}
+
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      const lastActive = parseInt(sessionStorage.getItem(INACTIVITY_STORAGE_KEY), 10);
+      if (lastActive && (Date.now() - lastActive >= INACTIVITY_TIMEOUT_MS)) {
+        triggerInactivityLogout();
+        return;
+      }
+      recordUserActivity();
+    }
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    activityEvents.forEach(evt => {
+      window.addEventListener(evt, recordUserActivity, { passive: true });
+    });
+
+    setInterval(checkInactivityTimeout, 10000);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          checkInactivityTimeout();
+        }
+      });
+    }
+  }
+
+  // Sistemdeki tüm panellerdeki (admin.html, bayi.html vb.) 'Çıkış Yap' butonlarına otomatik bağlanma ve sayaç başlatma
   if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function () {
+      initInactivityWatcher();
       const logoutElements = document.querySelectorAll('.logout-btn, .btn-logout, #logout-button, [data-action="logout"]');
       logoutElements.forEach(el => {
         el.addEventListener('click', function (e) {
@@ -1989,5 +2102,6 @@
   window.parseJwtPayload = parseJwtPayload;
   window.jwtDecode = window.jwtDecode || parseJwtPayload;
   window.getResolvedTenantSlug = getResolvedTenantSlug;
+  window.initInactivityWatcher = initInactivityWatcher;
 
 })(window);

@@ -1243,6 +1243,15 @@
     window.API_BASE_URL = API_BASE;
     window.TENANT_SLUG = TENANT_SLUG;
 
+    // Güvenlik Koruması: Sekme bazlı sessionStorage zorunluluğu (Kalıcı localStorage token sızıntılarını imha et)
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('customerProfile');
+    } catch (e) {}
+
     // ==========================================================================
     // API İSTEMCİSİ VE GLOBAL GÜVENCE (ReferenceError & Anti-Hacker Fallback)
     // ==========================================================================
@@ -1251,7 +1260,7 @@
         return window.apiFetch(endpoint, options);
       }
       console.warn('[Storefront] window.apiFetch henüz yüklenmedi, yerel fallback apiFetch devrede.');
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const defaultHeaders = {
         'Content-Type': 'application/json',
         'x-tenant-slug': TENANT_SLUG,
@@ -1366,8 +1375,8 @@
     }
 
     function isLoggedIn() {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
+      const token = sessionStorage.getItem('token');
+      const user = sessionStorage.getItem('user');
       return !!(token && user);
     }
 
@@ -1382,7 +1391,7 @@
 
         let user = null;
         try {
-          user = JSON.parse(localStorage.getItem('user'));
+          user = JSON.parse(sessionStorage.getItem('user'));
         } catch (e) {}
 
         if (user) {
@@ -1417,10 +1426,117 @@
       updatePaymentMethodOptions();
     }
 
+    // ==========================================================================
+    // GLOBAL İNAKTİVİTE VE OTOMATİK ZAMAN AŞIMI SİSTEMİ (30 DAKİKA)
+    // ==========================================================================
+    const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 Dakika (1.800.000 ms)
+    const INACTIVITY_STORAGE_KEY = 'session_last_activity';
+    let lastActivityThrottled = 0;
+    let isSessionTimeoutTriggered = false;
+
+    function recordUserActivity() {
+      const now = Date.now();
+      // Fare ve klavye hareketlerini 5 saniyede bir throttle ederek performansı koru
+      if (now - lastActivityThrottled < 5000) return;
+      lastActivityThrottled = now;
+
+      if (isLoggedIn()) {
+        try {
+          sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(now));
+        } catch (e) {}
+      }
+    }
+
+    function checkInactivityTimeout() {
+      if (!isLoggedIn()) return;
+
+      const lastActiveStr = sessionStorage.getItem(INACTIVITY_STORAGE_KEY);
+      const lastActive = parseInt(lastActiveStr, 10);
+      const now = Date.now();
+
+      if (!lastActive || isNaN(lastActive)) {
+        try { sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(now)); } catch (e) {}
+        return;
+      }
+
+      if (now - lastActive >= INACTIVITY_TIMEOUT_MS) {
+        triggerInactivityLogout();
+      }
+    }
+
+    function triggerInactivityLogout() {
+      if (isSessionTimeoutTriggered) return;
+      isSessionTimeoutTriggered = true;
+
+      // 1. SessionStorage ve yerel oturum verilerini derhal temizle
+      try {
+        sessionStorage.clear();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('jwt');
+        localStorage.removeItem('customerProfile');
+      } catch (e) {}
+
+      currentCustomer = null;
+      userNotificationsCache = [];
+      checkAuthState();
+
+      // 2. Güvenlik uyarısını göster ve ana vitrine yönlendir
+      const timeoutMessage = 'Güvenlik nedeniyle oturumunuz zaman aşımına uğradı';
+      if (window.Swal) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Oturum Zaman Aşımı',
+          text: timeoutMessage,
+          confirmButtonText: 'Tamam',
+          confirmButtonColor: 'var(--tenant-color, #f97316)'
+        }).then(() => {
+          const isFile = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
+          window.location.href = isFile ? 'index.html' : (window.location.pathname.endsWith('index.html') ? 'index.html' : '/');
+        });
+      } else {
+        alert(timeoutMessage);
+        const isFile = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
+        window.location.href = isFile ? 'index.html' : (window.location.pathname.endsWith('index.html') ? 'index.html' : '/');
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(timeoutMessage, 'warning');
+      }
+    }
+
+    function initInactivityWatcher() {
+      // Sayfa ilk yüklendiğinde oturumun süresinin dolup dolmadığını denetle
+      if (isLoggedIn()) {
+        const lastActive = parseInt(sessionStorage.getItem(INACTIVITY_STORAGE_KEY), 10);
+        if (lastActive && (Date.now() - lastActive >= INACTIVITY_TIMEOUT_MS)) {
+          triggerInactivityLogout();
+          return;
+        }
+        recordUserActivity();
+      }
+
+      // Kullanıcı eylemlerini (fare, klavye, dokunma, kaydırma) dinle
+      const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+      activityEvents.forEach(evt => {
+        window.addEventListener(evt, recordUserActivity, { passive: true });
+      });
+
+      // Her 10 saniyede bir ve sekme görünür hale geldiğinde kontrol et
+      setInterval(checkInactivityTimeout, 10000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          checkInactivityTimeout();
+        }
+      });
+    }
+
     // --------------------------------------------------------------------------
     // 1. BAŞLANGIÇ YÜKLEMESİ
     // --------------------------------------------------------------------------
     document.addEventListener('DOMContentLoaded', async () => {
+      initInactivityWatcher();
       checkAuthState();
       loadCartFromStorage();
       setupSaasBadge();
@@ -1508,7 +1624,7 @@
         }
       }
       try {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         const profile = user.customerProfile || user;
         const addr = profile.address || profile.deliveryAddress || '';
         const parts = [addr, profile.district, profile.city].filter(Boolean);
@@ -1541,7 +1657,7 @@
 
       let user = null;
       try {
-        user = JSON.parse(localStorage.getItem('user') || '{}');
+        user = JSON.parse(sessionStorage.getItem('user') || '{}');
       } catch (e) {
         user = null;
       }
@@ -1684,7 +1800,7 @@
         let res = null;
 
         const liveUrl = `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products?${queryString}`;
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         const headers = { 
           'Accept': 'application/json', 
           'x-tenant-slug': TENANT_SLUG,
@@ -2666,8 +2782,19 @@
         });
 
         if (res && res.token && res.user) {
-          localStorage.setItem('token', res.token);
-          localStorage.setItem('user', JSON.stringify(res.user));
+          sessionStorage.setItem('token', res.token);
+          sessionStorage.setItem('user', JSON.stringify(res.user));
+          sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(Date.now()));
+          isSessionTimeoutTriggered = false;
+
+          // Güvenlik: Eski kalıcı localStorage oturumunu tamamen sil
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('jwt');
+          } catch (e) {}
+
           closeLoginModal();
           checkAuthState();
           showToast(`Hoş geldiniz, ${res.user.name || 'Müşteri'}!`);
@@ -2714,8 +2841,18 @@
         if (res && res.success) {
           showToast('Hesabınız başarıyla oluşturuldu! Giriş yapılıyor...');
           if (res.token && res.user) {
-            localStorage.setItem('token', res.token);
-            localStorage.setItem('user', JSON.stringify(res.user));
+            sessionStorage.setItem('token', res.token);
+            sessionStorage.setItem('user', JSON.stringify(res.user));
+            sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(Date.now()));
+            isSessionTimeoutTriggered = false;
+
+            try {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('jwt');
+            } catch (e) {}
+
             closeRegisterModal();
             checkAuthState();
             await loadProfile();
@@ -2939,9 +3076,9 @@
         if (res && (res.success || res.data)) {
           currentCustomer = res.data || { ...(currentCustomer || {}), companyName, phone, address, city, district };
           try {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const user = JSON.parse(sessionStorage.getItem('user') || '{}');
             user.customerProfile = { ...(user.customerProfile || {}), ...(currentCustomer || {}) };
-            localStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('user', JSON.stringify(user));
           } catch (e) {}
           updateDeliveryAddressPreview();
           closeAccountSettingsModal();
@@ -2953,9 +3090,9 @@
         // Çevrimdışı veya geçici ağ hatasında yerel durumu yine de güvenle güncelle
         currentCustomer = { ...(currentCustomer || {}), companyName, phone, address, city, district };
         try {
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const user = JSON.parse(sessionStorage.getItem('user') || '{}');
           user.customerProfile = { ...(user.customerProfile || {}), ...(currentCustomer || {}) };
-          localStorage.setItem('user', JSON.stringify(user));
+          sessionStorage.setItem('user', JSON.stringify(user));
         } catch (e) {}
         updateDeliveryAddressPreview();
         closeAccountSettingsModal();

@@ -1,1 +1,5 @@
-"Kullanıcı 'Güvenli Çıkış Yap' butonuna tıkladığında Netlify 'Page not found' (404) hatası veriyor. Lütfen çıkış işlemini yöneten JavaScript fonksiyonunu (logout) bul. LocalStorage/SessionStorage ve token temizleme işlemleri yapıldıktan sonra window.location.href yönlendirmesini doğrudan ana vitrin sayfasına (/ veya index.html) yapacak şekilde düzelt. Olmayan bir login veya panel sayfasına yönlendirme yapmasını engelle."
+"Sistemde ciddi bir oturum (session) yönetimi zafiyeti var. Kullanıcı tarayıcıyı kapattığında veya yeniden açtığında oturumu otomatik devam ediyor. Lütfen frontend tarafındaki (hem vitrin hem de yönetim paneli) kimlik doğrulama (auth) altyapısını şu güvenlik standartlarına göre güncelle:
+
+Login işlemi sırasında alınan JWT/Auth Token bilgilerini ve kullanıcı datalarını localStorage yerine, sadece mevcut sekmeye özel olan sessionStorage içerisine kaydet. Böylece kullanıcı sekmeyi veya tarayıcıyı kapattığı anda tüm yetkiler otomatik olarak imha edilsin.
+
+Global bir inaktivite (zaman aşımı) sayacı ekle. Kullanıcı 30 dakika boyunca fare hareketi, tıklama veya klavye tuşlaması gibi hiçbir işlem yapmazsa, sessionStorage'ı temizleyip 'Güvenlik nedeniyle oturumunuz zaman aşımına uğradı' uyarısı (toast/alert) ile otomatik çıkış (logout) işlemini tetikle."
