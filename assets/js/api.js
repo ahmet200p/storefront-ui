@@ -330,8 +330,8 @@
       };
     }
 
-    // 0. POST /auth/register
-    if (cleanEndpoint === '/auth/register' && method === 'POST') {
+    // 0. POST /auth/register ve /store/auth/register (Multi-tenant Müşteri/Otoservis Kaydı)
+    if ((cleanEndpoint === '/auth/register' || cleanEndpoint === '/store/auth/register') && method === 'POST') {
       // NVİ kontrolü
       const rawTc = body.tcKimlikNo || body.tcNo || (body.taxNumber && String(body.taxNumber).length === 11 ? body.taxNumber : null);
       const rawDogumYili = body.dogumYili || body.birthYear;
@@ -347,7 +347,23 @@
       const email = (body.email || '').toLowerCase().trim();
       const password = (body.password || '').trim();
       const role = body.role || 'CUSTOMER';
-      const tenantId = body.tenantId || 'tenant-ahmet-oto';
+
+      // prompt.md Kuralı: İsteğin header'ından gelen x-tenant-slug bilgisine bakarak doğrudan o bayinin altına bağla
+      let headerSlug = null;
+      if (options && options.headers) {
+        if (typeof Headers !== 'undefined' && options.headers instanceof Headers) {
+          headerSlug = options.headers.get('x-tenant-slug') || options.headers.get('X-Tenant-Slug');
+        } else if (typeof options.headers === 'object') {
+          headerSlug = options.headers['x-tenant-slug'] || options.headers['X-Tenant-Slug'];
+        }
+      }
+      const subToFind = headerSlug || body.subdomain || body.tenantSlug || TENANT_SLUG || 'ahmetoto';
+      const cleanSub = String(subToFind).trim().toLowerCase();
+      const matchedTenant = (store.tenants && store.tenants.find(t => (t.subdomain || '').toLowerCase() === cleanSub || t.id === cleanSub)) 
+        || (store.tenants && store.tenants[0]) 
+        || { id: 'tenant-ahmet-oto', subdomain: 'ahmetoto', name: 'Ahmet Oto' };
+      const tenantId = body.tenantId || matchedTenant.id;
+
       const customerType = (body.customerType || 'MECHANIC').toUpperCase();
       const fullName = (body.fullName || body.name || email.split('@')[0]).trim();
       const companyName = (body.companyName || '').trim() || (customerType === 'MECHANIC' ? `${fullName} Oto Servis` : fullName);
@@ -356,10 +372,17 @@
         return { success: false, message: 'E-posta ve şifre zorunludur.' };
       }
 
+      if (password.length < 6) {
+        return { success: false, message: 'Şifre en az 6 karakter olmalıdır.' };
+      }
+
       const existingUser = store.users.find(u => u.email.toLowerCase() === email);
       if (existingUser) {
         return { success: false, message: 'Bu e-posta adresi ile kayıtlı kullanıcı zaten mevcut.' };
       }
+
+      // Şifre güvenliği: bcrypt formatında güvenli hashleme simülasyonu
+      const bcryptHashedPassword = `$2b$10$eXampleHashMock${btoa(password).slice(0, 22)}`;
 
       const newProfile = {
         id: `cust-${Date.now().toString(36)}`,
@@ -370,16 +393,18 @@
         discountRate: 0.0,
         balance: 0.0,
         status: customerType === 'MECHANIC' ? 'PENDING_APPROVAL' : 'APPROVED',
-        tenantId: tenantId
+        tenantId: tenantId,
+        tenant: matchedTenant
       };
 
       const newUser = {
         id: `usr-${Date.now().toString(36)}`,
         email,
-        password,
+        password: bcryptHashedPassword,
         name: fullName,
         role,
         tenantId,
+        tenant: matchedTenant,
         customerProfile: newProfile,
         createdAt: new Date().toISOString()
       };
