@@ -1,37 +1,27 @@
-# PROJE GÖREVİ: Global Mobil Uyumluluk (Responsive Design) Revizyonu
+# KRİTİK GÖREV: UI Yanlış Konumlandırma Temizliği ve `store.html` Entegrasyonu
 
-## BAĞLAM VE KRİTİK HATA TESPİTİ
-Kullanıcı giriş sayfasından (Login), Admin paneline ve B2B Vitrin sayfalarına kadar tüm projenin mobil görünümü tamamen çökmüş durumdadır. Masaüstündeki iki veya çok sütunlu yapılar (`flex-row` veya `grid-cols-x`), mobil cihazlarda alt alta geçmediği için içerikler birbiri üzerine binmekte, taşmakta ve platformu kullanılamaz kılmaktadır. 
+**DURUM BİLDİRİMİ VE ZORUNLU KABUL:**
+Önceki adımlarda "Akıllı Garaj", "İşçilik Süresi" ve "Bakım Kiti" modüllerini ısrarla `bayi.html` (bayi yönetim/stok ekleme) dosyasına entegre ettin. **Bu tamamen yanlıştır ve iptal edilmiştir.** Bu özellikler bayinin stok eklediği yerde değil, müşterinin/ustanın parça satın aldığı B2B Vitrin'de (`store.html`) olmak ZORUNDADIR. 
+Aşağıdaki adımları sırasıyla, itiraz etmeden ve başka bir alternatif sunmadan uygulayacaksın.
 
-Derhal projedeki TÜM HTML/React/Arayüz dosyalarını (Login, Admin, Bayi, Store vb.) tarayacak ve aşağıdaki 5 MİMARİ KURALA göre yeniden yapılandıracaksın.
+### ADIM 1: `bayi.html` DOSYASININ TAMAMEN TEMİZLENMESİ
+1. `bayi.html` dosyasını aç.
+2. Önceki adımlarda bu dosyaya eklediğin "Garajımdan Seç", "Tahmini İşçilik" ve "Çapraz Satış (Birlikte Al)" modüllerine ait **TÜM HTML kodlarını, butonları ve JavaScript fetch/DOM manipülasyon fonksiyonlarını KESİNLİKLE SİL.**
+3. `bayi.html` içindeki "Yeni Ürün Ekle" modalı veya diğer alanlar tamamen eski (sade) haline geri dönsün. Bu dosyada sadakat modülüne dair tek bir satır kod kalmayacak.
 
----
+### ADIM 2: `store.html` (B2B VİTRİN) DOSYASINA ENTEGRASYON VE YERLEŞİM
+Şimdi tüm bu modülleri asıl yeri olan `store.html` dosyasına inşa edeceksin.
 
-## ZORUNLU TAILWIND CSS KURALLARI (MOBILE-FIRST ARCHITECTURE)
+**A. Üst Navigasyon & Kullanıcı Menüsü:**
+- Sayfanın en üstünde yer alan (içinde Sepet ikonu ve Kullanıcı Profili olan) Header/Navigasyon barına **"🚗 Garajım"** adında şık bir buton ekle.
+- Bu butona tıklandığında, kullanıcının daha önce kaydettiği araçları (Plaka ve Müşteri Adı ile) listeleyen ufak bir dropdown açılsın. Buradan seçilen aracın Şasi Numarası otomatik olarak arama çubuğuna aktarılsın.
 
-**KURAL 1: FLEXBOX SÜTUN YAPILANDIRMASI (YIĞINLAMA)**
-- Ekranda yan yana duran (sol afiş, sağ form veya yan yana iki panel) ne kadar `flex` container varsa hepsini varsayılan olarak `flex-col` (alt alta) yapacaksın.
-- Masaüstü görünümü için ise Tailwind'in `md:` veya `lg:` breakpointlerini kullanarak bunları yan yana dizeceksin. 
-- *Örnek Hatalı Kod:* `className="flex w-full"`
-- *Olması Gereken:* `className="flex flex-col md:flex-row w-full"`
+**B. Sol "Katalog Filtreleri" Alanı (Sidebar):**
+- Ekrandaki "Katalog Filtreleri" kısmında, 'Araç Markası' Bento seçim grid'inin hemen üstüne veya altına **"Akıllı Garaj (Hızlı Araç Seçimi)"** adında yeni bir panel (div) yerleştir.
+- Bu panelin içine, kullanıcının hızlıca garajındaki kayıtlı araçları seçebileceği bir `<select>` (Dropdown) elementi koy. "Garajdan seçilen araç" ile arama doğrudan tetiklensin.
 
-**KURAL 2: GRID YAPILARININ MOBİLİZASYONU**
-- Vitrindeki ürün kartları veya dashboard istatistikleri gibi Grid yapıları mobilde asla 3-4 sütun olmayacak. 
-- *Örnek Hatalı Kod:* `className="grid grid-cols-4 gap-4"`
-- *Olması Gereken:* `className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"`
+**C. Ürün Detay ve Arama Sonuçları (Orta/Sağ Alan):**
+- `store.html` içindeki arama sonuçlarının listelendiği ürün kartlarına (Product Card) veya tabloya, Backend'den gelecek olan `estimatedLaborTime` verisini basan **"Tahmini İşçilik: X Saat"** rozetini ekle.
+- Bir ürüne tıklandığında (veya detayına girildiğinde) sayfanın altına **"💡 Bu parçayı alanlar şunları da aldı (Bakım Kiti)"** yatay kaydırılabilir (scrollable) listesini yerleştir.
 
-**KURAL 3: X EKSENİNDE TAŞMA (HORIZONTAL SCROLL) YASAĞI**
-- Kullanıcı telefonda sayfayı sağa sola kaydıramaz (x-axis overflow yasaktır). 
-- En dış `body` veya `main` wrapper'larına mutlaka `overflow-x-hidden` ve `w-full` ekle.
-- Sadece tabloların (veri listesi, siparişler) olduğu div'leri `overflow-x-auto` ile sararak, sadece tablonun kendi içinde sağa sola kaydırılabilmesine izin ver.
-
-**KURAL 4: DİNAMİK BOŞLUKLAR (PADDING & MARGIN)**
-- Mobilde ekran küçük olduğu için devasa `p-12` veya `m-8` gibi boşluklar ekranı boğar. Tüm padding ve margin değerlerini responsive yap.
-- *Kural:* Mobilde dar boşluk (`p-4`), masaüstünde geniş boşluk (`md:p-8`).
-
-**KURAL 5: TİPOGRAFİ VE BUTON ÖLÇEKLENDİRME**
-- Mobilde devasa başlıklar veya dokunulamayacak kadar küçük butonlar istemiyorum. 
-- Başlıkları `text-2xl md:text-4xl` şeklinde kademelendir.
-- Tüm tıklanabilir alanların (butonlar, inputlar) `min-h-[44px]` gibi Apple/Android UX standartlarına uygun dokunma alanına sahip olduğundan ve formların `%100` genişlikte (`w-full`) olduğundan emin ol.
-
-**GÖREV:** Tüm arayüz kodunu analiz et ve bu kuralları eksiksiz uygula. Sadece Login sayfasını değil, Admin ve Bayi (Store) panellerinin iskeletlerini de bu `flex-col md:flex-row` mimarisine geçir.
+**GÖREV KURALI:** Bu değişikliklerin tamamı sadece `store.html` ve ona bağlı JS dosyalarında yapılacaktır. Bu mimari kararı kabul et ve kodu buna göre hemen üretmeye başla.

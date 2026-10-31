@@ -1461,6 +1461,10 @@
           customPrice: tc.customPrice,
           discountedPrice: finalPrice,
           appliedDiscountRate: discountRate,
+          estimatedLaborTime: prod.estimatedLaborTime || getRecommendedTogetherAndLabor(prod.name, prod.category, prod.oeNumber).estimatedLaborTime,
+          recommendedTogether: (Array.isArray(prod.recommendedTogether) && prod.recommendedTogether.length > 0)
+            ? prod.recommendedTogether
+            : getRecommendedTogetherAndLabor(prod.name, prod.category, prod.oeNumber).recommendedTogether,
           pricing: {
             listPrice: listPrice,
             discountRate: discountRate,
@@ -1670,6 +1674,118 @@
             totalAmount
           }
         }
+      };
+    }
+
+    
+    // =========================================================================
+    // 10d. AKILLI GARAJ (MY GARAGE) YÖNETİMİ (Prompt Modül 1 & 2)
+    // =========================================================================
+
+    // GET /garage/vehicles & GET /garage
+    if ((cleanEndpoint === '/garage/vehicles' || cleanEndpoint === '/garage') && method === 'GET') {
+      if (!store.garageVehicles || store.garageVehicles.length === 0) {
+        store.garageVehicles = [
+          {
+            id: 'grg-1',
+            plateNumber: '34 KL 4821',
+            customerName: 'Ahmet Usta (Demir Nakliyat)',
+            vin: 'VF15R040H52814321',
+            vehicleModel: 'Renault Megane IV 1.5 dCi (2020)',
+            vehicleBrand: 'Renault',
+            createdAt: '2026-10-15T09:30:00.000Z'
+          },
+          {
+            id: 'grg-2',
+            plateNumber: '06 BT 992',
+            customerName: 'Ali Yılmaz (Öz Ticaret)',
+            vin: 'WVWZZZAUZHP129841',
+            vehicleModel: 'Volkswagen Golf 7 1.6 TDI (2019)',
+            vehicleBrand: 'Volkswagen',
+            createdAt: '2026-10-22T14:15:00.000Z'
+          },
+          {
+            id: 'grg-3',
+            plateNumber: '35 FZ 104',
+            customerName: 'Hasan Kaya (Kaya Lojistik)',
+            vin: 'ZFA35600006781290',
+            vehicleModel: 'Fiat Egea 1.3 Multijet (2021)',
+            vehicleBrand: 'Fiat',
+            createdAt: '2026-10-28T11:00:00.000Z'
+          },
+          {
+            id: 'grg-4',
+            plateNumber: '16 BUR 77',
+            customerName: 'Murat Usta (Bursa Oto Servis)',
+            vin: 'WF0DXXGAKDJP18231',
+            vehicleModel: 'Ford Focus 1.5 TDCi (2018)',
+            vehicleBrand: 'Ford',
+            createdAt: '2026-10-29T16:00:00.000Z'
+          }
+        ];
+        saveMockStore(store);
+      }
+      return {
+        success: true,
+        count: store.garageVehicles.length,
+        data: store.garageVehicles
+      };
+    }
+
+    // POST /garage/vehicles & POST /garage
+    if ((cleanEndpoint === '/garage/vehicles' || cleanEndpoint === '/garage') && method === 'POST') {
+      const customerName = String(body.customerName || body.name || '').trim();
+      const plateNumber = String(body.plateNumber || body.plate || '').trim().toUpperCase();
+      const vin = String(body.vin || body.vinNumber || '').trim().toUpperCase();
+      const vehicleModel = String(body.vehicleModel || body.model || body.vehicleInfo || 'Binek Araç').trim();
+      const vehicleBrand = String(body.vehicleBrand || body.brand || 'Renault').trim();
+
+      if (!customerName || !plateNumber) {
+        return {
+          success: false,
+          status: 400,
+          message: 'Garaja kayıt için "Müşteri Adı" ve "Plaka" alanlarının doldurulması zorunludur.'
+        };
+      }
+
+      if (!store.garageVehicles) store.garageVehicles = [];
+
+      const newVehicle = {
+        id: `grg-${Date.now().toString(36)}`,
+        customerName,
+        plateNumber,
+        vin: vin || 'VF15R040H52814321',
+        vehicleModel,
+        vehicleBrand,
+        createdAt: new Date().toISOString()
+      };
+
+      const existingIdx = store.garageVehicles.findIndex(v => v.plateNumber === plateNumber);
+      if (existingIdx >= 0) {
+        store.garageVehicles[existingIdx] = { ...store.garageVehicles[existingIdx], ...newVehicle, id: store.garageVehicles[existingIdx].id };
+      } else {
+        store.garageVehicles.unshift(newVehicle);
+      }
+      saveMockStore(store);
+
+      return {
+        success: true,
+        message: `"${plateNumber}" plakalı araç (${customerName}) Akıllı Garajınıza başarıyla kaydedildi.`,
+        data: newVehicle
+      };
+    }
+
+    // DELETE /garage/vehicles/:id & DELETE /garage/:id
+    if ((cleanEndpoint.startsWith('/garage/vehicles/') || cleanEndpoint.startsWith('/garage/')) && method === 'DELETE') {
+      const parts = cleanEndpoint.split('/');
+      const targetId = parts[parts.length - 1];
+      if (store.garageVehicles) {
+        store.garageVehicles = store.garageVehicles.filter(v => v.id !== targetId && v.plateNumber !== targetId);
+        saveMockStore(store);
+      }
+      return {
+        success: true,
+        message: 'Araç garajınızdan silindi.'
       };
     }
 
