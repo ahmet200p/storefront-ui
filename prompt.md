@@ -1,22 +1,21 @@
-# PROJE GÖREVİ: Pazarlama ve Büyüme (Growth) Modülleri - Frontend Mimarisi
+# KRİTİK HATA ÇÖZÜMÜ: Sipariş Tamamlama (Checkout) 500 Hatası ve Auth (401) Sorunu
 
-**GÖREV BİLDİRİMİ:**
-`store.html` (B2B Vitrin) sayfasına ustaların satışlarını artıracak ve platforma veri besleyecek 3 yeni UI/UX özelliği entegre edeceksin. Tasarımlar Mobile-First standartlarında olacak.
+**HATA TESPİTİ:**
+Vitrin sayfasında (`store.html`) sipariş tamamlama (veya teklif oluşturma) işlemi sırasında zincirleme hatalar yaşanıyor. 
+1. Önce `401 Unauthorized` hatası dönüyor ve sistem "Ziyaretçi Moduna" düşüyor.
+2. Ziyaretçi modundayken sipariş tamamlanmaya çalışıldığında, Backend `500 Internal Server Error` vererek çöküyor (Büyük ihtimalle `userId` null olduğu için Prisma kaydı reddediyor).
 
-**1. WHATSAPP TEKLİF PAYLAŞIM BUTONU:**
-- Sepet modülünün içine veya parça listesinin üzerine yeşil, dikkat çekici bir **"💬 Müşteriye Teklif Gönder (WhatsApp)"** butonu ekle.
-- **İşleyiş:** Butona tıklandığında, ekrandaki parçaları `POST /api/quotes/generate` endpoint'ine gönderip bir teklif linki (URL) al.
-- Ardından otomatik olarak şu formatta bir WhatsApp penceresi aç (`window.open('https://wa.me/?text=...', '_blank')`):
-  *"Merhaba. Aracınızın bakım/onarım işlemi için gerekli parçalar ve toplam maliyet teklifi hazırlanmıştır. Detayları buradan inceleyebilirsiniz: [TEKLİF_LINKI]"*
+Lütfen şu iki düzeltmeyi DERHAL yap:
 
-**2. İNTERAKTİF OEM ŞEMA (TIKLANABİLİR GÖRSEL) TASARIMI:**
-- `store.html` içindeki teknik şema (image) render alanını geliştir. Eğer Backend'den gelen görsel objesinde `hotspots` (koordinatlar) dizisi varsa; resmi `position: relative` bir kapsayıcı (div) içine al.
-- Bu koordinatlara (x, y) denk gelen yerlerin üzerine `position: absolute` ile şeffaf, hover olunca etrafı parlayan (border-blue-500) tıklanabilir div'ler (veya rozetler) yerleştir.
-- Usta bu şema üzerindeki noktaya (örneğin 3 numaralı parçaya) tıkladığında, o parça otomatik olarak sepete eklensin veya listeye vurgu (highlight) yapılarak odaklansın.
+### 1. FRONTEND KONTROLÜ (`api.js` veya `store.html` sipariş fonksiyonu):
+- Siparişi Tamamla / Teklif Gönder butonuna basıldığında tetiklenen `fetch` isteğini bul.
+- Bu isteğin `headers` kısmına kullanıcının oturum token'ının (Örn: `localStorage.getItem('token')`) eklendiğinden %100 emin ol.
+- EĞER kullanıcı giriş yapmamışsa (token yoksa), `fetch` isteğini hiç başlatmadan ekrana anında `alert` veya modal ile "Lütfen siparişi tamamlamak için Bayi Girişi yapınız" uyarısı ver. Kimliksiz istek atılmasını fronted'de engelle.
 
-**3. KAYIP ARAMA (NO-HIT) SESSİZ TETİKLEYİCİSİ:**
-- Arama motoru fonksiyonunu (`fetch` işlemini) incele. Eğer API'den dönen parça sayısı `0` ise ve ekrana "Aramanıza Uygun Parça Bulunamadı" yazısı basılıyorsa;
-- Ekrana basma işlemiyle aynı anda (arka planda, kullanıcıya hiçbir loading veya uyarı göstermeden) aranan o kelimeyi (Şasi veya OE kodunu) `POST /api/analytics/no-hit` endpoint'ine yolla.
-- Böylece boş dönen her arama arka planda adminin stoğa eklemesi için loglanmış (kayıt altına alınmış) olacak.
+### 2. BACKEND KONTROLÜ (Sipariş/Teklif Oluşturma Endpoint'i):
+- Siparişi karşılayan endpoint'e (URL'de `subdomain=...` query'si alan controller'a) git.
+- Fonksiyonun içine kapsamlı bir `try/catch` bloğu ekle. 
+- Eğer `req.user` veya `req.body.userId` eksikse sunucuyu çöktürmek (500) yerine, frontend'e düzgün bir HTTP `401` veya `403` JSON hatası dön (`{ error: "Oturum süreniz dolmuş, lütfen tekrar giriş yapın." }`).
+- 500 hatasının asıl sebebini görmek için catch bloğuna `console.error(error)` ekle ki terminalde Prisma'nın tam olarak nerede patladığını görebilelim.
 
-Tüm DOM manipülasyonlarını ve API entegrasyonlarını `store.html` yapısına zarar vermeden entegre et.
+Bu düzeltmeleri yap ve sipariş akışının B2B yetkilendirme mantığına uygun çalışmasını sağla.

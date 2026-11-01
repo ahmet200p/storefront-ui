@@ -1677,9 +1677,9 @@
     }
 
     function isLoggedIn() {
-      const token = sessionStorage.getItem('token');
-      const user = sessionStorage.getItem('user');
-      return !!(token && user);
+      const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || 
+                    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('token'));
+      return !!token;
     }
 
     function checkAuthState() {
@@ -1693,7 +1693,8 @@
 
         let user = null;
         try {
-          user = JSON.parse(sessionStorage.getItem('user'));
+          user = JSON.parse((typeof localStorage !== 'undefined' && localStorage.getItem('user')) || 
+                            (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('user')) || '{}');
         } catch (e) {}
 
         if (user) {
@@ -2585,10 +2586,25 @@
     // 6. SİPARİŞİ TAMAMLAMA (ATOMIC CHECKOUT & ADDRESS SNAPSHOT)
     // --------------------------------------------------------------------------
     async function submitStoreOrder() {
-      if (!isLoggedIn()) {
-        showToast('Sipariş vermek için lütfen giriş yapınız.', 'info');
-        openLoginModal();
-        return;
+      // 1. FRONTEND KONTROLÜ: Kullanıcı giriş yapmamışsa veya token yoksa fetch'i hiç başlatma (Prompt Kural 1)
+      const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || 
+                    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('token'));
+      if (!token || !isLoggedIn()) {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Bayi Girişi Gerekli',
+            text: 'Lütfen siparişi tamamlamak için Bayi Girişi yapınız.',
+            confirmButtonText: 'Bayi Girişi Yap',
+            confirmButtonColor: 'var(--tenant-color, #f97316)'
+          }).then(() => {
+            openLoginModal();
+          });
+        } else {
+          alert('Lütfen siparişi tamamlamak için Bayi Girişi yapınız.');
+          openLoginModal();
+        }
+        return; // Kimliksiz istek atılmasını frontend'de KESİNLİKLE engelle!
       }
 
       if (cart.length === 0) {
@@ -2659,6 +2675,9 @@
 
         const res = await apiFetch('/store/orders', {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           body: {
             items: itemsPayload,
             paymentMethod,
@@ -3179,18 +3198,14 @@
         });
 
         if (res && res.token && res.user) {
+          try {
+            localStorage.setItem('token', res.token);
+            localStorage.setItem('user', JSON.stringify(res.user));
+          } catch (e) {}
           sessionStorage.setItem('token', res.token);
           sessionStorage.setItem('user', JSON.stringify(res.user));
           sessionStorage.setItem(INACTIVITY_STORAGE_KEY, String(Date.now()));
           isSessionTimeoutTriggered = false;
-
-          // Güvenlik: Eski kalıcı localStorage oturumunu tamamen sil
-          try {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('jwt');
-          } catch (e) {}
 
           closeLoginModal();
           checkAuthState();

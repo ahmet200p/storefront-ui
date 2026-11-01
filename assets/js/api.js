@@ -2212,7 +2212,8 @@
       headers.set('Content-Type', 'application/json');
     }
 
-    const token = sessionStorage.getItem('token');
+    const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || 
+                  (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('token'));
     if (token && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${token}`);
     }
