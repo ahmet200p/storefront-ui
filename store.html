@@ -2090,7 +2090,8 @@
         queryParams.set('tenant', activeSlug);
         queryParams.set('subdomain', activeSlug);
         queryParams.set('slug', activeSlug);
-        queryParams.set('limit', '100');
+        queryParams.set('page', '1');
+        queryParams.set('limit', '50');
         if (currentBrand && currentBrand !== 'ALL') queryParams.set('brand', currentBrand);
         if (currentCategory && currentCategory !== 'ALL') queryParams.set('category', currentCategory);
         if (currentSearchQuery) {
@@ -2105,8 +2106,7 @@
         const token = sessionStorage.getItem('token');
         const headers = { 
           'Accept': 'application/json', 
-          'x-tenant-slug': TENANT_SLUG,
-          'X-Tenant-Slug': TENANT_SLUG 
+          'x-tenant-slug': (typeof activeSlug !== 'undefined' && activeSlug) ? activeSlug : (typeof TENANT_SLUG !== 'undefined' ? TENANT_SLUG : 'ahmetoto')
         };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -2319,7 +2319,7 @@
 
         const crossesCount = Array.isArray(prod.crossReferences) ? prod.crossReferences.length : (prod.crossReferences ? 1 : 0);
 
-        const laborTime = it.estimatedLaborTime || (it.product && it.product.estimatedLaborTime) || (typeof getRecommendedTogetherAndLabor === 'function' ? getRecommendedTogetherAndLabor(productName, category, oeNumber).estimatedLaborTime : null);
+        const laborTime = item.estimatedLaborTime || (prod && prod.estimatedLaborTime) || (typeof getRecommendedTogetherAndLabor === 'function' ? getRecommendedTogetherAndLabor(productName, category, oeNumber).estimatedLaborTime : null);
         const laborBadgeHtml = (laborTime && String(laborTime).trim() !== '' && String(laborTime).toLowerCase() !== 'null') ? `
           <div class="mt-1 mb-1.5">
             <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/90 shadow-2xs" title="Montaj ve Değişim İşçilik Süresi">
@@ -3842,6 +3842,7 @@
         document.body.style.overflow = '';
       }
     }
+    window.fetchInitialCatalog = loadProducts;
     window.openProductDetailModal = openProductDetailModal;
     window.closeProductDetailModal = closeProductDetailModal;
 
