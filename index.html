@@ -2094,9 +2094,22 @@
         queryParams.set('limit', '50');
         if (currentBrand && currentBrand !== 'ALL') queryParams.set('brand', currentBrand);
         if (currentCategory && currentCategory !== 'ALL') queryParams.set('category', currentCategory);
+        let matchedGarage = null;
+        if (currentSearchQuery && typeof cachedGarageVehicles !== 'undefined') {
+          const cleanQ = currentSearchQuery.trim().toLowerCase();
+          matchedGarage = (cachedGarageVehicles || []).find(v => {
+            const vVin = (v.vin || '').trim().toLowerCase();
+            const vPlate = (v.plateNumber || '').trim().toLowerCase();
+            return vVin === cleanQ || cleanQ.includes(vVin) || vPlate === cleanQ;
+          });
+        }
+
         if (currentSearchQuery) {
           queryParams.set('search', currentSearchQuery);
           if (currentSearchType) queryParams.set('searchType', currentSearchType);
+          if (matchedGarage && matchedGarage.vehicleBrand && (!currentBrand || currentBrand === 'ALL')) {
+            queryParams.set('brand', matchedGarage.vehicleBrand);
+          }
         }
 
         const queryString = queryParams.toString();
@@ -2125,8 +2138,11 @@
           console.warn('[Storefront] Canlı direkt fetch yanıt vermedi, apiFetch deneniyor:', e);
         }
 
-        if (!res && typeof apiFetch === 'function') {
-          res = await apiFetch(`/store/products?${queryString}`);
+        if ((!res || !res.data || res.data.length === 0) && typeof apiFetch === 'function') {
+          const fallbackRes = await apiFetch(`/store/products?${queryString}`);
+          if (fallbackRes && (fallbackRes.success || Array.isArray(fallbackRes.data))) {
+            res = fallbackRes;
+          }
         }
 
         if (res && (res.success || Array.isArray(res.data))) {
@@ -2998,7 +3014,22 @@
       const activeTags = [];
       if (currentBrand && currentBrand !== 'ALL') activeTags.push(`Marka: ${currentBrand}`);
       if (currentCategory && currentCategory !== 'ALL') activeTags.push(`Kategori: ${currentCategory}`);
-      if (currentSearchQuery) activeTags.push(`Arama: "${currentSearchQuery}"`);
+      if (currentSearchQuery) {
+        let matchedGarage = null;
+        if (typeof cachedGarageVehicles !== 'undefined') {
+          const cleanQ = currentSearchQuery.trim().toLowerCase();
+          matchedGarage = (cachedGarageVehicles || []).find(v => {
+            const vVin = (v.vin || '').trim().toLowerCase();
+            const vPlate = (v.plateNumber || '').trim().toLowerCase();
+            return vVin === cleanQ || cleanQ.includes(vVin) || vPlate === cleanQ;
+          });
+        }
+        if (matchedGarage) {
+          activeTags.push(`🚗 Garaj: ${matchedGarage.plateNumber} (${matchedGarage.vehicleModel || matchedGarage.vehicleBrand})`);
+        } else {
+          activeTags.push(`Arama: "${currentSearchQuery}"`);
+        }
+      }
 
       if (activeTags.length > 0) {
         text.textContent = activeTags.join(' • ');
@@ -3045,6 +3076,9 @@
 
       const catSelect = document.getElementById('sidebar-category-select');
       if (catSelect) catSelect.value = 'ALL';
+
+      const garageSelect = document.getElementById('sidebar-garage-select');
+      if (garageSelect) garageSelect.value = '';
 
       const inStockCheckbox = document.getElementById('filter-in-stock-only');
       if (inStockCheckbox) inStockCheckbox.checked = false;
@@ -4059,7 +4093,10 @@
     // Sidebar Garaj Dropdown Değişimi (Prompt ADIM 2.B)
     function handleSidebarGarageSelect(selectEl) {
       const vin = (selectEl.value || '').trim();
-      if (!vin) return;
+      if (!vin) {
+        clearSearchInput();
+        return;
+      }
 
       const vehicle = cachedGarageVehicles.find(v => v.vin === vin);
       const plate = vehicle ? vehicle.plateNumber : '';
