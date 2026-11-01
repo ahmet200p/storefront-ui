@@ -220,6 +220,209 @@
    * Backend sunucusuna ulaşılamadığında kullanıcının sistemde tam fonksiyonel
    * olarak gezinmesini, işlem yapmasını ve oturum açmasını sağlar.
    */
+  
+  // =========================================================================
+  // Birlikte Alınanlar (Cross-Sell / Bakım Kiti) ve Tahmini İşçilik Süresi Motoru (Prompt.md Modül 2 & 3)
+  // =========================================================================
+  function getRecommendedTogetherAndLabor(name, group, oeCode) {
+    const combined = `${name || ''} ${group || ''} ${oeCode || ''}`.toLowerCase();
+
+    // 1. Triger / Sente / Zamanlama Mekanizması
+    if (combined.includes('triger') || combined.includes('sente') || combined.includes('zamanlama') || combined.includes('130c15339r') || combined.includes('1872496')) {
+      return {
+        estimatedLaborTime: '2.5 Saat',
+        recommendedTogether: [
+          {
+            id: 'rec-wp',
+            tenantProductId: 'rec-wp',
+            name: 'Devirdaim Su Pompası (Metal Yüksek Debi Çark)',
+            oeNumber: '210100495R',
+            brand: 'VALEO',
+            defaultPrice: 1500,
+            unitPrice: 1200,
+            discountedPrice: 1200,
+            laborTime: '+0.5 Saat',
+            reason: 'Triger değişirken devirdaim sökülür; işçilik tasarrufu için birlikte değişmelidir.'
+          },
+          {
+            id: 'rec-vbelt',
+            tenantProductId: 'rec-vbelt',
+            name: 'V Kayışı (Alternatör Kayışı 6PK1200)',
+            oeNumber: '7701477028',
+            brand: 'GATES',
+            defaultPrice: 400,
+            unitPrice: 320,
+            discountedPrice: 320,
+            laborTime: '+0.2 Saat',
+            reason: 'Triger seti söküldüğünde V kayışı da doğrudan serbest kalır.'
+          },
+          {
+            id: 'rec-antifreeze',
+            tenantProductId: 'rec-antifreeze',
+            name: 'Organik Kırmızı Antifriz Konsantre -37°C (3 Litre)',
+            oeNumber: 'AFS-ANT-03',
+            brand: 'CASTROL',
+            defaultPrice: 350,
+            unitPrice: 280,
+            discountedPrice: 280,
+            laborTime: '+0.1 Saat',
+            reason: 'Devirdaim su pompası yenilendiğinde soğutma suyu tamamen tazelenmelidir.'
+          }
+        ]
+      };
+    }
+
+    // 2. Fren Balatası / Disk / Kaliper
+    if (combined.includes('fren') || combined.includes('balata') || combined.includes('disk') || combined.includes('410601241r') || combined.includes('5q0698151b') || combined.includes('77366536')) {
+      return {
+        estimatedLaborTime: '1 Saat',
+        recommendedTogether: [
+          {
+            id: 'rec-disc',
+            tenantProductId: 'rec-disc',
+            name: 'Ön Fren Diski Havalandırmalı (280mm Takım)',
+            oeNumber: '402060010R',
+            brand: 'TRW',
+            defaultPrice: 1800,
+            unitPrice: 1440,
+            discountedPrice: 1440,
+            laborTime: '+0.4 Saat',
+            reason: 'Aşınmış diske yeni balata takıldığında ötme ve erken aşınma yaşanır.'
+          },
+          {
+            id: 'rec-dot4',
+            tenantProductId: 'rec-dot4',
+            name: 'DOT-4 Sentetik Fren Hidrolik Sıvısı 500ml',
+            oeNumber: 'AFS-DOT4-500',
+            brand: 'BREMBO',
+            defaultPrice: 200,
+            unitPrice: 160,
+            discountedPrice: 160,
+            laborTime: '+0.2 Saat',
+            reason: 'Kaliper pistonları geriye itildiğinde hidrolik basınç ve seviye yenilenmelidir.'
+          },
+          {
+            id: 'rec-spray',
+            tenantProductId: 'rec-spray',
+            name: 'Balata & Fren Parça Temizleme Spreyi 500ml',
+            oeNumber: 'AFS-SPR-500',
+            brand: 'WÜRTH',
+            defaultPrice: 120,
+            unitPrice: 95,
+            discountedPrice: 95,
+            laborTime: '+0.1 Saat',
+            reason: 'Kumpas yuvalarındaki balata tozları ve pası temizlemek için kullanılır.'
+          }
+        ]
+      };
+    }
+
+    // 3. Yağ & Filtre Bakım Seti
+    if (combined.includes('filtre') || combined.includes('yağ') || combined.includes('yag') || combined.includes('8200768913') || combined.includes('03n115562')) {
+      return {
+        estimatedLaborTime: '45 Dk',
+        recommendedTogether: [
+          {
+            id: 'rec-air',
+            tenantProductId: 'rec-air',
+            name: 'Hava Filtresi Paneli',
+            oeNumber: '165467674R',
+            brand: 'MANN-FILTER',
+            defaultPrice: 280,
+            unitPrice: 220,
+            discountedPrice: 220,
+            laborTime: '+15 Dk',
+            reason: 'Periyodik bakımda motor ömrü için hava filtresi yağla birlikte değişmelidir.'
+          },
+          {
+            id: 'rec-cabin',
+            tenantProductId: 'rec-cabin',
+            name: 'Karbonlu Polen Kabin Filtresi',
+            oeNumber: '272778970R',
+            brand: 'FILTRON',
+            defaultPrice: 320,
+            unitPrice: 250,
+            discountedPrice: 250,
+            laborTime: '+15 Dk',
+            reason: 'Klima havasının temizliği ve koku önleme için periyodik değişimi önerilir.'
+          },
+          {
+            id: 'rec-oil',
+            tenantProductId: 'rec-oil',
+            name: '5W-30 C3 Tam Sentetik Motor Yağı (5 Litre)',
+            oeNumber: 'AFS-OIL-5W30',
+            brand: 'ELF EVOLUTION',
+            defaultPrice: 1250,
+            unitPrice: 990,
+            discountedPrice: 990,
+            laborTime: '+20 Dk',
+            reason: 'DPF uyumlu tam sentetik motor yağı dolumu.'
+          }
+        ]
+      };
+    }
+
+    // 4. Amortisör & Süspansiyon
+    if (combined.includes('amortisör') || combined.includes('amortisor') || combined.includes('yay') || combined.includes('salıncak') || combined.includes('543028126r')) {
+      return {
+        estimatedLaborTime: '2 Saat',
+        recommendedTogether: [
+          {
+            id: 'rec-mount',
+            tenantProductId: 'rec-mount',
+            name: 'Ön Amortisör Üst Takozu & Bilyası',
+            oeNumber: '543A08126R',
+            brand: 'SNR',
+            defaultPrice: 520,
+            unitPrice: 410,
+            discountedPrice: 410,
+            laborTime: '+0.5 Saat',
+            reason: 'Amortisör sökülmüşken takoz ve bilyanın değişmesi direksiyon sertliğini önler.'
+          },
+          {
+            id: 'rec-zrot',
+            tenantProductId: 'rec-zrot',
+            name: 'Ön Viraj Askı Rotu (Z-Rot Sol/Sağ)',
+            oeNumber: '546182198R',
+            brand: 'TRW',
+            defaultPrice: 300,
+            unitPrice: 240,
+            discountedPrice: 240,
+            laborTime: '+0.2 Saat',
+            reason: 'Süspansiyon yenilemede rot başları ve Z-rotlar birlikte kontrol edilmelidir.'
+          }
+        ]
+      };
+    }
+
+    // 5. Devirdaim / Soğutma
+    if (combined.includes('devirdaim') || combined.includes('termostat') || combined.includes('radyatör') || combined.includes('radyator')) {
+      return {
+        estimatedLaborTime: '1.5 Saat',
+        recommendedTogether: [
+          {
+            id: 'rec-antifreeze-c',
+            tenantProductId: 'rec-antifreeze-c',
+            name: 'Organik Kırmızı Antifriz Konsantre -37°C (3 Litre)',
+            oeNumber: 'AFS-ANT-03',
+            brand: 'CASTROL',
+            defaultPrice: 350,
+            unitPrice: 280,
+            discountedPrice: 280,
+            laborTime: '+0.1 Saat',
+            reason: 'Soğutma sistemi açıldığında antifrizli su yenilenmelidir.'
+          }
+        ]
+      };
+    }
+
+    // Varsayılan
+    return {
+      estimatedLaborTime: '1 Saat',
+      recommendedTogether: []
+    };
+  }
+
   function handleOfflineMock(endpoint, options = {}) {
     const store = initMockStore();
     const method = (options.method || 'GET').toUpperCase();
@@ -1474,18 +1677,204 @@
         };
       });
 
+      
+      // Otomotiv Seed Kataloğu (Yerel Demo & Çevrimdışı Güvencesi)
+      if (calculated.length === 0) {
+        const defaultSeeds = [
+          {
+            name: 'Triger Kayış Kiti & Gergi Rulmanı',
+            oeNumber: '130C15339R',
+            vehicleBrand: 'Renault',
+            category: 'Motor Parçaları',
+            partGroup: 'Motor & Mekanik',
+            compatibleModels: 'Megane IV, Clio V, Captur II 1.5 dCi',
+            defaultPrice: 2850,
+            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Ön Fren Balata Takımı (Sensörlü)',
+            oeNumber: '410601241R',
+            vehicleBrand: 'Renault',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            compatibleModels: 'Megane IV, Clio V, Talisman, Kadjar',
+            defaultPrice: 1250,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Ön Fren Diski Havalandırmalı (280mm Takım)',
+            oeNumber: '402060010R',
+            vehicleBrand: 'Renault',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            compatibleModels: 'Megane IV, Clio V, Dacia Duster',
+            defaultPrice: 1800,
+            imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Yağ Filtresi Vidalı Tip',
+            oeNumber: '8200768913',
+            vehicleBrand: 'Renault',
+            category: 'Filtreler',
+            partGroup: 'Filtre & Bakım',
+            compatibleModels: 'Renault, Dacia 1.5 dCi Tüm Modeller, Megane IV',
+            defaultPrice: 280,
+            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Hava Filtresi Paneli',
+            oeNumber: '165467674R',
+            vehicleBrand: 'Renault',
+            category: 'Filtreler',
+            partGroup: 'Filtre & Bakım',
+            compatibleModels: 'Megane IV, Clio V, Captur II',
+            defaultPrice: 320,
+            imageUrl: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Devirdaim Su Pompası (Metal Yüksek Debi Çark)',
+            oeNumber: '210100495R',
+            vehicleBrand: 'Renault',
+            category: 'Soğutma & Isıtma',
+            partGroup: 'Soğutma & Isıtma',
+            compatibleModels: 'Renault Clio IV/V, Megane III/IV 1.5 dCi',
+            defaultPrice: 1500,
+            imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Karbonlu Polen Kabin Filtresi',
+            oeNumber: '272778970R',
+            vehicleBrand: 'Renault',
+            category: 'Filtreler',
+            partGroup: 'Filtre & Bakım',
+            compatibleModels: 'Megane IV, Talisman, Espace V',
+            defaultPrice: 340,
+            imageUrl: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Ön Fren Balata Takımı',
+            oeNumber: '5Q0698151B',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            compatibleModels: 'Golf 7, Passat B8, Octavia III, Leon',
+            defaultPrice: 1450,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Yağ & Yakıt Filtre Bakım Kiti',
+            oeNumber: '03N115562',
+            vehicleBrand: 'Volkswagen',
+            category: 'Filtreler',
+            partGroup: 'Filtre & Bakım',
+            compatibleModels: 'Volkswagen Golf 7 1.6 TDI, Passat B8',
+            defaultPrice: 850,
+            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Ön Fren Balata Takımı',
+            oeNumber: '77366536',
+            vehicleBrand: 'Fiat',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            compatibleModels: 'Fiat Egea 1.3 / 1.6 Multijet, 500L',
+            defaultPrice: 1100,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'
+          },
+          {
+            name: 'Triger Kayış & Rulman Seti',
+            oeNumber: '1872496',
+            vehicleBrand: 'Ford',
+            category: 'Motor Parçaları',
+            partGroup: 'Motor & Mekanik',
+            compatibleModels: 'Ford Focus 1.5 TDCi, C-Max, Kuga',
+            defaultPrice: 2950,
+            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80'
+          }
+        ];
+
+        calculated = defaultSeeds.map((seed, sIdx) => {
+          const listP = seed.defaultPrice;
+          const discAmt = discountRate > 0 ? listP * (discountRate / 100) : 0;
+          const finP = parseFloat((listP - discAmt).toFixed(2));
+          const lr = getRecommendedTogetherAndLabor(seed.name, seed.partGroup, seed.oeNumber);
+          return {
+            tenantProductId: `tp-seed-${sIdx + 1}`,
+            productId: `prod-seed-${sIdx + 1}`,
+            oeNumber: seed.oeNumber,
+            name: seed.name,
+            category: seed.category,
+            vehicleBrand: seed.vehicleBrand,
+            compatibleModels: seed.compatibleModels,
+            partGroup: seed.partGroup,
+            imageUrl: seed.imageUrl,
+            images: [seed.imageUrl],
+            stock: 25,
+            isDiscounted: discountRate > 0,
+            defaultPrice: listP,
+            customPrice: listP,
+            discountedPrice: finP,
+            appliedDiscountRate: discountRate,
+            pricing: {
+              listPrice: listP,
+              discountRate: discountRate,
+              savedAmount: parseFloat((listP - finP).toFixed(2)),
+              finalPrice: finP
+            },
+            estimatedLaborTime: lr.estimatedLaborTime,
+            recommendedTogether: lr.recommendedTogether
+          };
+        });
+      }
+
       if (brandFilter && brandFilter !== 'all') {
         calculated = calculated.filter(p => (p.vehicleBrand || '').toLowerCase().includes(brandFilter));
       }
 
       if (searchFilter) {
-        calculated = calculated.filter(p => 
-          (p.name || '').toLowerCase().includes(searchFilter) ||
-          (p.oeNumber || '').toLowerCase().includes(searchFilter) ||
-          (p.vehicleBrand || '').toLowerCase().includes(searchFilter) ||
-          (p.compatibleModels || '').toLowerCase().includes(searchFilter) ||
-          (p.partGroup || '').toLowerCase().includes(searchFilter)
-        );
+        // Akıllı Garaj: Şasi No (VIN) veya Plaka eşleşmesi
+        let matchedGarageVehicle = null;
+        if (store.garageVehicles && Array.isArray(store.garageVehicles)) {
+          const cleanQ = searchFilter.replace(/\s+/g, '').toLowerCase();
+          matchedGarageVehicle = store.garageVehicles.find(v => {
+            const vVin = (v.vin || '').replace(/\s+/g, '').toLowerCase();
+            const vPlate = (v.plateNumber || '').replace(/\s+/g, '').toLowerCase();
+            return vVin === cleanQ || cleanQ.includes(vVin) || vPlate === cleanQ;
+          });
+        }
+
+        if (matchedGarageVehicle) {
+          const vBrand = (matchedGarageVehicle.vehicleBrand || '').toLowerCase();
+          const vModel = (matchedGarageVehicle.vehicleModel || '').toLowerCase();
+          const filtered = calculated.filter(p => {
+            const b = (p.vehicleBrand || '').toLowerCase();
+            const c = (p.compatibleModels || '').toLowerCase();
+            const n = (p.name || '').toLowerCase();
+            const brandMatch = vBrand && (b.includes(vBrand) || c.includes(vBrand));
+            const modelTokens = vModel.split(/\s+/).filter(t => t.length > 2);
+            const modelMatch = modelTokens.some(t => c.includes(t) || n.includes(t));
+            return brandMatch || modelMatch;
+          });
+          calculated = filtered.length > 0 ? filtered : calculated;
+        } else {
+          // Ham VIN desenleri algılama (VF1 -> Renault, WVW -> VW, ZFA -> Fiat, WF0 -> Ford)
+          let detectedBrand = '';
+          const rawVin = searchFilter.toLowerCase().replace(/\s+/g, '');
+          if (rawVin.startsWith('vf1')) detectedBrand = 'renault';
+          else if (rawVin.startsWith('wvw') || rawVin.startsWith('wau')) detectedBrand = 'volkswagen';
+          else if (rawVin.startsWith('zfa')) detectedBrand = 'fiat';
+          else if (rawVin.startsWith('wf0')) detectedBrand = 'ford';
+
+          calculated = calculated.filter(p => 
+            (p.name || '').toLowerCase().includes(searchFilter) ||
+            (p.oeNumber || '').toLowerCase().includes(searchFilter) ||
+            (p.vehicleBrand || '').toLowerCase().includes(searchFilter) ||
+            (p.compatibleModels || '').toLowerCase().includes(searchFilter) ||
+            (p.partGroup || '').toLowerCase().includes(searchFilter) ||
+            (detectedBrand && (p.vehicleBrand || '').toLowerCase().includes(detectedBrand)) ||
+            (detectedBrand && (p.compatibleModels || '').toLowerCase().includes(detectedBrand))
+          );
+        }
       }
 
       const currentBal = firstCust && firstCust.balance !== undefined ? firstCust.balance : 14850.00;
@@ -2243,6 +2632,7 @@
   window.parseJwtPayload = parseJwtPayload;
   window.jwtDecode = window.jwtDecode || parseJwtPayload;
   window.getResolvedTenantSlug = getResolvedTenantSlug;
+  window.getRecommendedTogetherAndLabor = getRecommendedTogetherAndLabor;
   window.initInactivityWatcher = initInactivityWatcher;
 
 })(window);

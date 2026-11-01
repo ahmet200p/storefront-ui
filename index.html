@@ -2112,7 +2112,7 @@
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
           const response = await fetch(liveUrl, { method: 'GET', headers, signal: controller.signal });
           clearTimeout(timeoutId);
           if (response.ok) {
