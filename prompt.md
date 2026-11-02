@@ -1,16 +1,35 @@
-# GÖREV: Vitrindeki Statik "Bakım Kiti / Önerilen Ürünler" Alanının Temizlenmesi
+# KRİTİK GÖREV: Filtreleme Eşleşmesi ve Yanlış Sayaç (Facet Count) Sorununun Çözümü
 
-**DURUM:** `store.html` sayfasında (ürün kartlarının veya sepet/modal alanının altında) yer alan "BU PARÇAYI ALANLAR ŞUNLARI DA ALDI (BAKIM KİTİ)" başlığı ve altındaki ürünler (Castrol DOT 4, Würth Sprey vb.) tasarımda statik (hardcoded) olarak kalmıştır. Veritabanında bu ürünler bulunmamaktadır, bu da gerçek dışı bir görüntü yaratmaktadır.
+**HATA TESPİTİ:**
+1. **Yanlış Sayım (Facet Count):** API'den tek bir ürün (Renault/OEM) dönmesine rağmen, sol menüdeki JS sayım algoritması hata yaparak Bosch, Ferodo, TRW, Brembo gibi alakasız checkbox'ların yanına `(1)` yazdırıyor.
+2. **Kırık Filtreleme:** Yanında `(1)` yazan "Ön Fren Balatası" kategorisine tıklandığında ürün ekrandan kayboluyor ("Ürün bulunamadı" hatası). Bu durum, Frontend'in filtreleme yaparken kullandığı `value` ile Backend'den dönen veri (`product.category`) arasında kesin eşleşme (strict match) olmadığını gösteriyor.
 
-Lütfen HTML dosyasında şu temizliği DERHAL uygula:
+Lütfen `store.html` ve JS dosyasında şu 3 adımı DERHAL uygula:
 
-### ADIM 1: SAHTE ÇAPRAZ SATIŞ (CROSS-SELL) BLOĞUNU TAMAMEN SİL
-- `store.html` veya ilgili JavaScript şablonu (template literal) içerisinde `BU PARÇAYI ALANLAR ŞUNLARI DA ALDI` metnini arat.
-- Bu başlığı ve içindeki sahte (fake) ürün kartlarını kapsayan ana `<div...>` veya `<section...>` bloğunu koddan TAMAMEN SİL. 
-- Eğer ileride bu yapıyı dinamik kurmak istersen diye kodu silmek yerine tamamen HTML yorum satırına (`<!-- ... -->`) da alabilirsin, ancak ekranda KESİNLİKLE görünmemelidir.
+### ADIM 1: CHECKBOX "VALUE" DEĞERLERİNİ VERİTABANIYLA EŞİTLE
+- Sol menüdeki tüm checkbox'ları (`<input type="checkbox">`) kontrol et.
+- Bunların `value` attribute'ları, API'den dönen ürün objesindeki isimlerle BİREBİR aynı olmalıdır.
+  *(Örnek: Veritabanında kategori "Ön Fren Balatası" olarak geçiyorsa, checkbox da kesinlikle `<input type="checkbox" value="Ön Fren Balatası">` olmalıdır. Başındaki/sonundaki boşlukları (trim) kontrol et.)*
 
-### ADIM 2: VERİ TUTARLILIĞI KONTROLÜ
-- Sayfada sadece API'den (`GET /api/store/products`) gelen gerçek ürünler `map` veya `forEach` ile ekrana basılmalıdır.
-- Kodun içinde unutulmuş başka sahte (statik) ürün kartı kalıntısı varsa, onları da tespit edip temizle.
+### ADIM 2: YANLIŞ SAYIM (FACET COUNT) ALGORİTMASINI DÜZELT
+- Ürünler geldiğinde sol menüdeki sayıları hesaplayan JS fonksiyonunu bul.
+- Sayım algoritması tüm checkbox'lara rastgele `1` eklememelidir. Sadece gelen ürünün kendi markasına ve kategorisine 1 eklemelidir.
+- **Doğru Mantık:**
+  ```javascript
+  const brandCounts = {};
+  const categoryCounts = {};
+  
+  products.forEach(product => {
+      // Veritabanından gelen tam string değerine göre say
+      brandCounts[product.brand] = (brandCounts[product.brand] || 0) + 1;
+      categoryCounts[product.category] = (categoryCounts[product.category] || 0) + 1;
+  });
+  
+  // Sonra sadece ilgili data-filter etiketlerine bu sayıları bas, olmayanlara (0) bas.
 
-**EMİR:** B2B platformunda sadece bayinin API aracılığıyla sisteme kaydettiği gerçek stoklar görünmelidir. Gömülü (hardcoded) gelen tüm sahte ürün önerilerini ve "bakım kiti" bloklarını arayüzden kaldır.
+  ADIM 3: FİLTRELEME (CLICK) AKSİYONUNU DÜZELT
+Checkbox'a tıklandığında Backend'e (veya Frontend filtreleme fonksiyonuna) giden değeri logla: console.log("Filtrelenen Kategori:", secilenKategori);
+
+Filtreleme işleminin büyük/küçük harf duyarlılığı (case sensitivity) yüzünden patlamaması için, karşılaştırma yaparken her iki tarafı da .toLowerCase().trim() ile normalize et veya Prisma tarafında eşleşmenin sorunsuz yapıldığından emin ol.
+
+EMİR: Filtre tıklandığında ürünün yok olması veri uyumsuzluğundandır. Checkbox value değerlerini gerçek veritabanı verileriyle birebir eşleştir ve rastgele (1) yazan sayım döngüsünü kesin (strict) karşılaştırma yapacak şekilde düzelt.

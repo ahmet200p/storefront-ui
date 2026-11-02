@@ -439,12 +439,12 @@
             <span class="text-slate-400 text-xs">▾</span>
           </div>
           <div class="space-y-2 text-xs font-medium text-slate-700" id="filter-manufacturers-list">
-            <label class="flex items-center justify-between cursor-pointer hover:text-orange-600 select-none">
+            <label class="flex items-center justify-between cursor-pointer hover:text-orange-600 select-none" id="brand-oem-label">
               <span class="flex items-center gap-2">
-                <input type="checkbox" value="Orijinal VAG (OEM)" onchange="handleManufacturerToggle(this)" class="w-3.5 h-3.5 rounded text-orange-600 focus:ring-0">
-                <span>Orijinal VAG (OEM)</span>
+                <input type="checkbox" id="brand-oem-checkbox" value="Orijinal VAG (OEM)" onchange="handleManufacturerToggle(this)" class="w-3.5 h-3.5 rounded text-orange-600 focus:ring-0">
+                <span id="brand-oem-text">Orijinal VAG (OEM)</span>
               </span>
-              <span data-filter-count="brand-Orijinal VAG (OEM)" class="text-[11px] text-slate-400 font-mono">(0)</span>
+              <span id="brand-oem-count" data-filter-count="brand-Orijinal VAG (OEM)" class="text-[11px] text-slate-400 font-mono">(0)</span>
             </label>
             <label class="flex items-center justify-between cursor-pointer hover:text-orange-600 select-none">
               <span class="flex items-center gap-2">
@@ -1220,10 +1220,25 @@
           const id = p.tenantProductId || p.productId || p.id || prod.id || `prod-${idx}`;
           const oeNumber = p.oeNumber || prod.oeNumber || p.oemNumber || '5Q0 698 151';
           const name = p.name || prod.name || 'Yedek Parça';
-          const vehicleBrand = p.vehicleBrand || prod.vehicleBrand || p.brand || 'OEM';
+          const vehicleBrand = (p.vehicleBrand || prod.vehicleBrand || p.brand || prod.brand || 'OEM').trim();
+          const brand = (p.brand || prod.brand || p.manufacturer || prod.manufacturer || vehicleBrand).trim();
+          const manufacturer = (p.manufacturer || prod.manufacturer || brand).trim();
+
+          // Kategori çözümlemesi: Veritabanı ve parçanın tam adına göre normalize et (strict match)
+          let category = (p.category || prod.category || p.subCategory || prod.subCategory || '').trim();
+          const nameLower = name.toLowerCase();
+          if (!category || category === 'Genel' || category === 'Motor & Mekanik' || category === 'Fren Sistemi') {
+            if (nameLower.includes('ön fren balata') || nameLower.includes('ön fren balatası')) category = 'Ön Fren Balatası';
+            else if (nameLower.includes('arka fren balata') || nameLower.includes('arka fren balatası')) category = 'Arka Fren Balatası';
+            else if (nameLower.includes('ön fren disk')) category = 'Ön Fren Diski';
+            else if (nameLower.includes('arka fren disk')) category = 'Arka Fren Diski';
+            else if (nameLower.includes('kaliper') || nameLower.includes('hortum')) category = 'Fren Kaliperi & Hortumlar';
+            else if (nameLower.includes('balata')) category = 'Ön Fren Balatası';
+            else if (!category) category = 'Genel';
+          }
+          const subCategory = category;
+          const partGroup = (p.partGroup || prod.partGroup || category).trim();
           const compatibleModels = p.compatibleModels || prod.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
-          const category = p.category || prod.category || 'Genel';
-          const partGroup = p.partGroup || prod.partGroup || category;
           const labor = p.estimatedLaborTime || prod.estimatedLaborTime || '45 Dk';
           const price = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (prod.defaultPrice || p.defaultPrice || 1450)));
           const discountedPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (price > 0 ? price * 0.8 : 0));
@@ -1242,14 +1257,16 @@
             discountedPrice,
             stock,
             oeNumber,
+            brand,
             vehicleBrand,
-            manufacturer: p.manufacturer || vehicleBrand,
+            manufacturer,
             sellerName,
             companyName: sellerName,
             dealerName: sellerName,
             user: p.user || { companyName: sellerName, name: sellerName },
             compatibleModels,
             category,
+            subCategory,
             partGroup,
             estimatedLaborTime: labor,
             imageUrl,
@@ -1257,12 +1274,15 @@
             product: {
               id,
               name,
+              brand,
               price,
               defaultPrice: price,
               stock,
               oeNumber,
               category,
+              subCategory,
               vehicleBrand,
+              manufacturer,
               compatibleModels,
               partGroup,
               imageUrl,
@@ -1272,8 +1292,21 @@
           };
         });
 
-        // prompt.md: Sol menü filtre sayılarını (facet counts) gelen veriye göre hesapla ve güncelle
-        updateFilterFacetCounts(rawList);
+        // Sol menüdeki OEM Marka etiketini ve checkbox değerini gelen ürünün ana araç markasına göre güncelle
+        if (allProducts.length > 0) {
+          const primaryBrand = (allProducts[0].vehicleBrand || allProducts[0].brand || '').trim();
+          const oemCheckbox = document.getElementById('brand-oem-checkbox');
+          const oemText = document.getElementById('brand-oem-text');
+          const oemCount = document.getElementById('brand-oem-count');
+          if (primaryBrand && primaryBrand.toLowerCase() !== 'oem') {
+            if (oemCheckbox) oemCheckbox.value = primaryBrand;
+            if (oemText) oemText.textContent = `Orijinal ${primaryBrand} (OEM)`;
+            if (oemCount) oemCount.setAttribute('data-filter-count', `brand-${primaryBrand}`);
+          }
+        }
+
+        // prompt.md ADIM 2: Sol menü filtre sayılarını (facet counts) gelen veriye göre hesapla ve güncelle
+        updateFilterFacetCounts(allProducts);
 
         applyClientFilters();
       } catch (err) {
@@ -1361,130 +1394,92 @@
     window.selectBrand = selectBrand;
 
     // --------------------------------------------------------------------------
-    // DYNAMIC FILTER FACET COUNTS (prompt.md ADIM 2 & ADIM 3)
+    // DYNAMIC FILTER FACET COUNTS (prompt.md ADIM 2: Kesin/Strict Sayım Algoritması)
     // --------------------------------------------------------------------------
     function updateFilterFacetCounts(products) {
-      // Gelen ürün dizisi (data.data veya data veya allProducts)
       const list = Array.isArray(products) ? products : (allProducts || []);
-      const counts = {};
+      const brandCounts = {};
+      const categoryCounts = {};
 
-      // DOM'daki tüm data-filter-count etiketlerini bul
+      // ADIM 2: Veritabanından gelen tam string değerine göre say
+      list.forEach(product => {
+        const prod = product.product || {};
+        const b = (product.brand || prod.brand || product.manufacturer || prod.manufacturer || product.vehicleBrand || prod.vehicleBrand || '').trim();
+        const c = (product.category || prod.category || product.subCategory || prod.subCategory || '').trim();
+
+        if (b) {
+          brandCounts[b] = (brandCounts[b] || 0) + 1;
+        }
+        if (c) {
+          categoryCounts[c] = (categoryCounts[c] || 0) + 1;
+        }
+      });
+
+      console.log("[FACET_COUNTS] Marka Sayımları:", brandCounts);
+      console.log("[FACET_COUNTS] Kategori Sayımları:", categoryCounts);
+
+      // ADIM 2 & 3: Sadece ilgili data-filter etiketlerine bu sayıları bas, olmayanlara (0) bas
       const countSpans = document.querySelectorAll('[data-filter-count]');
-      if (!countSpans || countSpans.length === 0) return counts;
+      if (!countSpans || countSpans.length === 0) return { brandCounts, categoryCounts };
 
-      // ADIM 1: Sayıları varsayılan olarak 0 ile ilklendir
       countSpans.forEach(span => {
         const key = span.getAttribute('data-filter-count');
-        if (key) counts[key] = 0;
-      });
+        if (!key) return;
 
-      // ADIM 2: Gelen ürün dizisini döngüye sokarak (forEach) say
-      list.forEach(item => {
-        const prod = item.product || {};
-        const name = String(item.name || prod.name || '').toLowerCase();
-        const cat = String(item.category || prod.category || '').toLowerCase();
-        const sub = String(item.subCategory || prod.subCategory || '').toLowerCase();
-        const part = String(item.partGroup || prod.partGroup || '').toLowerCase();
-        const mfr = String(item.manufacturer || prod.manufacturer || item.brand || prod.brand || item.vehicleBrand || prod.vehicleBrand || '').toLowerCase();
-        const vBrand = String(item.vehicleBrand || prod.vehicleBrand || '').toLowerCase();
-        const cross = item.crossReferences || prod.crossReferences || [];
+        let count = 0;
+        if (key.startsWith('brand-')) {
+          const targetBrand = key.replace('brand-', '').trim();
+          const targetLower = targetBrand.toLowerCase();
 
-        countSpans.forEach(span => {
-          const key = span.getAttribute('data-filter-count');
-          if (!key) return;
-
-          // 1. Marka / Üretici Sayımı (counts['brand-Bosch'] = (counts['brand-Bosch'] || 0) + 1)
-          if (key.startsWith('brand-')) {
-            const brandTarget = key.replace('brand-', '').trim().toLowerCase();
-            let isMatch = false;
-
-            if (brandTarget === 'trw / zf') {
-              isMatch = mfr.includes('trw') || mfr.includes('zf') || name.includes('trw') || name.includes('zf');
-            } else if (brandTarget.includes('vag') || brandTarget.includes('oem')) {
-              isMatch = mfr.includes('vag') || mfr.includes('oem') || mfr.includes('orijinal') || name.includes('vag') || name.includes('oem');
-            } else {
-              isMatch = mfr.includes(brandTarget) || vBrand === brandTarget || name.includes(brandTarget);
+          // Sadece gelen ürünün kendi markasına kesin (strict/case-insensitive) eşleşme ile sayı ekle
+          Object.keys(brandCounts).forEach(bKey => {
+            const bLower = bKey.toLowerCase().trim();
+            if (bLower === targetLower) {
+              count += brandCounts[bKey];
+            } else if (targetLower === 'trw / zf' && (bLower === 'trw' || bLower === 'zf')) {
+              count += brandCounts[bKey];
+            } else if ((targetLower.includes('vag') || targetLower.includes('oem')) && (bLower.includes('vag') || bLower === 'oem' || bLower === 'orijinal')) {
+              count += brandCounts[bKey];
             }
+          });
+        } else if (key.startsWith('category-')) {
+          const targetCat = key.replace('category-', '').trim().toLowerCase();
 
-            if (!isMatch && Array.isArray(cross)) {
-              isMatch = cross.some(cr => {
-                const crb = String(cr.brand || '').toLowerCase();
-                if (brandTarget === 'trw / zf') return crb.includes('trw') || crb.includes('zf');
-                if (brandTarget.includes('vag') || brandTarget.includes('oem')) return crb.includes('vag') || crb.includes('oem');
-                return crb.includes(brandTarget);
-              });
+          // Sadece gelen ürünün kendi kategorisine kesin (strict/case-insensitive) eşleşme ile sayı ekle
+          Object.keys(categoryCounts).forEach(cKey => {
+            const cLower = cKey.toLowerCase().trim();
+            const cRoot = cLower.replace(/(balatası|balatasi)$/, 'balata').replace(/(diski)$/, 'disk');
+            const targetRoot = targetCat.replace(/(balatası|balatasi)$/, 'balata').replace(/(diski)$/, 'disk');
+            if (cLower === targetCat || cRoot === targetRoot) {
+              count += categoryCounts[cKey];
             }
+          });
+        }
 
-            if (isMatch) {
-              counts[key] = (counts[key] || 0) + 1;
-            }
-          }
-          // 2. Kategori / Alt Kategori Sayımı (counts['category-Ön Fren Balatası'] = ...)
-          else if (key.startsWith('category-')) {
-            const catTarget = key.replace('category-', '').trim().toLowerCase();
-            let isMatch = false;
+        span.textContent = '(' + count + ')';
 
-            if (catTarget === 'ön fren balatası') {
-              isMatch = sub.includes('ön fren balata') || name.includes('ön fren balata') ||
-                        ((sub.includes('balata') || cat.includes('fren') || name.includes('balata') || part.includes('fren')) && (name.includes('ön') || sub.includes('ön')));
-            } else if (catTarget === 'arka fren balatası') {
-              isMatch = sub.includes('arka fren balata') || name.includes('arka fren balata') ||
-                        ((sub.includes('balata') || cat.includes('fren') || name.includes('balata') || part.includes('fren')) && (name.includes('arka') || sub.includes('arka') || name.includes('kampana')));
-            } else if (catTarget === 'ön fren diski') {
-              isMatch = sub.includes('ön fren disk') || name.includes('ön fren disk') ||
-                        ((sub.includes('disk') || cat.includes('fren') || name.includes('disk') || part.includes('fren')) && (name.includes('ön') || sub.includes('ön')));
-            } else if (catTarget === 'arka fren diski') {
-              isMatch = sub.includes('arka fren disk') || name.includes('arka fren disk') ||
-                        ((sub.includes('disk') || cat.includes('fren') || name.includes('disk') || part.includes('fren')) && (name.includes('arka') || sub.includes('arka')));
-            } else if (catTarget.includes('kaliper') || catTarget.includes('hortum')) {
-              isMatch = sub.includes('kaliper') || sub.includes('hortum') || name.includes('kaliper') || name.includes('hortum') || cat.includes('kaliper');
-            } else {
-              isMatch = sub.includes(catTarget) || cat.includes(catTarget) || part.includes(catTarget) || name.includes(catTarget);
-            }
-
-            if (isMatch) {
-              counts[key] = (counts[key] || 0) + 1;
-            }
-          }
-          // 3. Şehir / Konum Sayımı (Opsiyonel Card 6)
-          else if (key.startsWith('city-')) {
-            const cityTarget = key.replace('city-', '').trim().toLowerCase();
-            const sCity = String(item.sellerCity || (item.user && item.user.city) || (item.tenant && item.tenant.city) || '').toLowerCase();
-            if (cityTarget === 'diğer') {
-              if (sCity && !sCity.includes('istanbul') && !sCity.includes('ankara')) {
-                counts[key] = (counts[key] || 0) + 1;
-              }
-            } else if (sCity.includes(cityTarget)) {
-              counts[key] = (counts[key] || 0) + 1;
-            }
-          }
-        });
-      });
-
-      // ADIM 3: Ekrana (DOM) sayıları güncelleme
-      countSpans.forEach(span => {
-        const key = span.getAttribute('data-filter-count');
-        const val = counts[key] || 0;
-        span.textContent = '(' + val + ')';
-
-        // prompt.md: Eğer bir kategoride hiç ürün yoksa, o değer (0) olarak görünmeye devam etsin (veya istersen checkbox'ı disabled yapacak kodu da ekleyebilirsin).
+        // Checkbox ve label durumu: Olmayanlar (0) disabled & soluk, olanlar aktif
         const label = span.closest('label');
         const checkbox = label ? label.querySelector('input[type="checkbox"]') : null;
         if (checkbox && !checkbox.checked) {
-          if (val === 0) {
+          if (count === 0) {
             checkbox.disabled = true;
-            label.classList.add('opacity-40', 'cursor-not-allowed');
-            label.classList.remove('cursor-pointer');
+            if (label && label.classList) {
+              label.classList.add('opacity-40', 'cursor-not-allowed');
+              label.classList.remove('cursor-pointer');
+            }
           } else {
             checkbox.disabled = false;
-            label.classList.remove('opacity-40', 'cursor-not-allowed');
-            label.classList.add('cursor-pointer');
+            if (label && label.classList) {
+              label.classList.remove('opacity-40', 'cursor-not-allowed');
+              label.classList.add('cursor-pointer');
+            }
           }
         }
       });
 
-      window.facetCounts = counts;
-      return counts;
+      window.facetCounts = { brandCounts, categoryCounts };
+      return { brandCounts, categoryCounts };
     }
     window.updateFilterFacetCounts = updateFilterFacetCounts;
     window.calculateFilterFacetCounts = updateFilterFacetCounts;
@@ -1522,18 +1517,29 @@
       // Subcategories filter
       if (currentSubCategories.length > 0) {
         filtered = filtered.filter(p => {
-          const sub = (p.subCategory || '').toLowerCase();
-          const name = (p.name || '').toLowerCase();
-          return currentSubCategories.some(sc => sub.includes(sc.toLowerCase()) || name.includes(sc.toLowerCase()));
+          const sub = (p.subCategory || p.category || '').toLowerCase().trim();
+          const name = (p.name || '').toLowerCase().trim();
+          return currentSubCategories.some(sc => {
+            const scLower = sc.toLowerCase().trim();
+            if (sub === scLower || sub.includes(scLower) || scLower.includes(sub)) return true;
+            const scRoot = scLower.replace(/(balatası|balatasi)$/, 'balata').replace(/(diski)$/, 'disk');
+            return name.includes(scLower) || name.includes(scRoot) || sub.includes(scRoot);
+          });
         });
       }
 
       // Manufacturers filter
       if (currentManufacturers.length > 0) {
         filtered = filtered.filter(p => {
-          const mfr = (p.manufacturer || '').toLowerCase();
-          const name = (p.name || '').toLowerCase();
-          return currentManufacturers.some(m => mfr.includes(m.toLowerCase()) || name.includes(m.toLowerCase()));
+          const mfr = (p.manufacturer || p.brand || p.vehicleBrand || '').toLowerCase().trim();
+          const name = (p.name || '').toLowerCase().trim();
+          return currentManufacturers.some(m => {
+            const mLower = m.toLowerCase().trim();
+            if (mfr === mLower || mfr.includes(mLower) || mLower.includes(mfr)) return true;
+            if (name.includes(mLower)) return true;
+            if ((mLower.includes('oem') || mLower.includes('orijinal')) && (mfr === 'oem' || mfr.includes('oem') || mfr.includes('orijinal'))) return true;
+            return false;
+          });
         });
       }
 
@@ -1774,21 +1780,29 @@
     }
 
     function handleSubCategoryToggle(checkbox) {
-      const val = checkbox.value;
+      const secilenKategori = (checkbox.value || '').trim();
+      console.log("Filtrelenen Kategori:", secilenKategori);
+
       if (checkbox.checked) {
-        if (!currentSubCategories.includes(val)) currentSubCategories.push(val);
+        if (!currentSubCategories.some(c => c.toLowerCase().trim() === secilenKategori.toLowerCase().trim())) {
+          currentSubCategories.push(secilenKategori);
+        }
       } else {
-        currentSubCategories = currentSubCategories.filter(c => c !== val);
+        currentSubCategories = currentSubCategories.filter(c => c.toLowerCase().trim() !== secilenKategori.toLowerCase().trim());
       }
       applyClientFilters();
     }
 
     function handleManufacturerToggle(checkbox) {
-      const val = checkbox.value;
+      const secilenMarka = (checkbox.value || '').trim();
+      console.log("Filtrelenen Marka:", secilenMarka);
+
       if (checkbox.checked) {
-        if (!currentManufacturers.includes(val)) currentManufacturers.push(val);
+        if (!currentManufacturers.some(m => m.toLowerCase().trim() === secilenMarka.toLowerCase().trim())) {
+          currentManufacturers.push(secilenMarka);
+        }
       } else {
-        currentManufacturers = currentManufacturers.filter(m => m !== val);
+        currentManufacturers = currentManufacturers.filter(m => m.toLowerCase().trim() !== secilenMarka.toLowerCase().trim());
       }
       applyClientFilters();
     }
@@ -1840,7 +1854,7 @@
       closeMegaMenu();
       currentSubCategories = [subCat];
       document.querySelectorAll('#filter-subcategories-list input[type="checkbox"]').forEach(cb => {
-        cb.checked = (cb.value === subCat);
+        cb.checked = (cb.value.toLowerCase().trim() === subCat.toLowerCase().trim());
       });
       applyClientFilters();
     }
