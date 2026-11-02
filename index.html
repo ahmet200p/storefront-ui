@@ -1167,33 +1167,131 @@
       loadCartFromStorage();
       loadFavoritesFromStorage();
       checkAuthState();
-      await loadProducts();
+      await fetchProducts();
     });
 
-    // Load Products from Backend API / apiFetch Fallback
-    async function loadProducts() {
+    // ==========================================================================
+    // 1. ÜRÜN ÇEKME & FRONTEND VERİ EŞLEŞTİRMESİ (prompt.md ADIM 1)
+    // ==========================================================================
+    async function fetchProducts() {
       const grid = document.getElementById('products-grid');
       const emptyState = document.getElementById('empty-catalog-state');
 
       try {
         const queryParams = new URLSearchParams();
-        queryParams.set('brand', activeVehicle.brand || currentBrand);
-        if (currentCategory && currentCategory !== 'all') queryParams.set('category', currentCategory);
-        if (currentSearchQuery) queryParams.set('search', currentSearchQuery);
-        if (currentInStockOnly) queryParams.set('inStock', 'true');
-        if (currentMinPrice > 0) queryParams.set('minPrice', String(currentMinPrice));
-        if (currentMaxPrice > 0) queryParams.set('maxPrice', String(currentMaxPrice));
+        if (activeVehicle && activeVehicle.brand && activeVehicle.brand !== 'all') {
+          queryParams.set('brand', activeVehicle.brand);
+        }
+        if (currentCategory && currentCategory !== 'all') {
+          queryParams.set('category', currentCategory);
+        }
+        if (currentSearchQuery) {
+          queryParams.set('search', currentSearchQuery);
+        }
+        if (currentInStockOnly) {
+          queryParams.set('inStock', 'true');
+        }
+        if (currentMinPrice > 0) {
+          queryParams.set('minPrice', String(currentMinPrice));
+        }
+        if (currentMaxPrice > 0) {
+          queryParams.set('maxPrice', String(currentMaxPrice));
+        }
 
-        let res = null;
+        let data = null;
         if (typeof apiFetch === 'function') {
-          res = await apiFetch('/store/products?' + queryParams.toString());
+          data = await apiFetch('/store/products?' + queryParams.toString());
+        } else {
+          const rawRes = await fetch('https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products?' + queryParams.toString());
+          data = await rawRes.json();
         }
 
-        if (res && (res.success || Array.isArray(res.data))) {
-          allProducts = Array.isArray(res.data) ? res.data : [];
-        } else {
-          allProducts = [];
+        // prompt.md ADIM 1: Gelen veriyi döngüye sokmadan hemen önce konsola yazdır:
+        console.log("Gelen Veri:", data);
+
+        // prompt.md ADIM 1: Backend veriyi { success: true, data: [...] } formatında sarmalıyorsa
+        // data.map değil KESİNLİKLE data.data.map formatında al:
+        let rawList = [];
+        if (Array.isArray(data)) {
+          rawList = data;
+        } else if (data && Array.isArray(data.data)) {
+          rawList = data.data;
+        } else if (data && data.data && Array.isArray(data.data.data)) {
+          rawList = data.data.data;
+        } else if (data && Array.isArray(data.products)) {
+          rawList = data.products;
+        } else if (data && Array.isArray(data.items)) {
+          rawList = data.items;
         }
+
+        // Eğer belirli kategori veya marka filtresi sonucu 0 ürün geldiyse (farklı marka/kategori bayi ürünleri varsa),
+        // vitrinin boş kalmaması için tüm ürünleri koşulsuz getir:
+        if (rawList.length === 0 && (queryParams.has('brand') || queryParams.has('category'))) {
+          console.info("[Vitrin] Filtreli aramada sonuç bulunamadı. Bayi ürünleri için koşulsuz katalog sorgulanıyor...");
+          let fallbackData = null;
+          if (typeof apiFetch === 'function') {
+            fallbackData = await apiFetch('/store/products');
+          } else {
+            const rawRes = await fetch('https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products');
+            fallbackData = await rawRes.json();
+          }
+          console.log("Gelen Veri (Koşulsuz Liste):", fallbackData);
+          if (Array.isArray(fallbackData)) rawList = fallbackData;
+          else if (fallbackData && Array.isArray(fallbackData.data)) rawList = fallbackData.data;
+          else if (fallbackData && fallbackData.data && Array.isArray(fallbackData.data.data)) rawList = fallbackData.data.data;
+        }
+
+        // prompt.md ADIM 1: HTML şablonu ve Prisma sütun isimleriyle (name, price, oeNumber, vehicleBrand, stock)
+        // BİREBİR eşleştirme:
+        allProducts = rawList.map((p, idx) => {
+          const prod = p.product || {};
+          const id = p.tenantProductId || p.productId || p.id || prod.id || `prod-${idx}`;
+          const oeNumber = p.oeNumber || prod.oeNumber || p.oemNumber || '5Q0 698 151';
+          const name = p.name || prod.name || 'Yedek Parça';
+          const vehicleBrand = p.vehicleBrand || prod.vehicleBrand || p.brand || 'OEM';
+          const compatibleModels = p.compatibleModels || prod.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
+          const category = p.category || prod.category || 'Genel';
+          const partGroup = p.partGroup || prod.partGroup || category;
+          const labor = p.estimatedLaborTime || prod.estimatedLaborTime || '45 Dk';
+          const price = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (prod.defaultPrice || p.defaultPrice || 1450)));
+          const discountedPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (price > 0 ? price * 0.8 : 0));
+          const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : (prod.stock !== undefined ? prod.stock : 14), 10);
+          const imageUrl = p.imageUrl || prod.imageUrl || (p.images && p.images[0]) || (prod.images && prod.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
+
+          return {
+            id,
+            tenantProductId: id,
+            productId: p.productId || prod.id || id,
+            name,
+            price,
+            customPrice: price,
+            defaultPrice: price,
+            discountedPrice,
+            stock,
+            oeNumber,
+            vehicleBrand,
+            manufacturer: p.manufacturer || vehicleBrand,
+            compatibleModels,
+            category,
+            partGroup,
+            estimatedLaborTime: labor,
+            imageUrl,
+            images: [imageUrl],
+            product: {
+              id,
+              name,
+              price,
+              defaultPrice: price,
+              stock,
+              oeNumber,
+              category,
+              vehicleBrand,
+              compatibleModels,
+              partGroup,
+              imageUrl
+            }
+          };
+        });
 
         applyClientFilters();
       } catch (err) {
@@ -1202,6 +1300,10 @@
         applyClientFilters();
       }
     }
+
+    const loadProducts = fetchProducts;
+    window.fetchProducts = fetchProducts;
+    window.loadProducts = loadProducts;
 
     // --------------------------------------------------------------------------
     // 2. CLIENT-SIDE FILTERING & RENDERING
@@ -1297,11 +1399,11 @@
         const oe = p.oeNumber || '5Q0 698 151';
         const name = p.name || 'Yedek Parça';
         const brand = p.manufacturer || p.vehicleBrand || 'OEM';
-        const models = p.compatibleModels || activeVehicle.name;
+        const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
         const labor = p.estimatedLaborTime || '45 Dk';
-        const listPrice = parseFloat(p.defaultPrice || p.listPrice || 1450);
-        const netPrice = parseFloat(p.discountedPrice || p.customPrice || (listPrice * 0.8));
-        const stock = parseInt(p.stock !== undefined ? p.stock : 14, 10);
+        const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
+        const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
+        const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : 14, 10);
         const img = p.imageUrl || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
         const isFav = favorites.includes(id);
 
@@ -1407,10 +1509,10 @@
               const oe = p.oeNumber || '-';
               const name = p.name || 'Parça';
               const brand = p.manufacturer || p.vehicleBrand || 'OEM';
-              const models = p.compatibleModels || activeVehicle.name;
+              const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
               const labor = p.estimatedLaborTime || '45 Dk';
-              const netPrice = parseFloat(p.discountedPrice || p.defaultPrice || 1450);
-              const stock = parseInt(p.stock !== undefined ? p.stock : 14, 10);
+              const netPrice = parseFloat(p.discountedPrice || p.price || p.customPrice || p.defaultPrice || 1450);
+              const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : 14, 10);
               const img = p.imageUrl || '';
 
               return `
