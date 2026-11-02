@@ -1,22 +1,17 @@
-# GÖREV: Boş Ürün Listesi (Sıfır Hata, Sıfır Veri) Sorununun Giderilmesi
+# GÖREV: Ürün Kartı (Product Card) Tasarımını Büyütme ve Satıcı Etiketi Ekleme
 
-**DURUM:** Frontend (`store.html`) sorunsuz bir şekilde Backend'e (Render) bağlanıp 200 OK yanıtı alıyor, konsolda hata yok. Ancak Bayi panelinden eklenen ürünler Vitrin ekranına düşmüyor (Liste boş veya array uyuşmazlığı var).
+**DURUM:** `store.html` sayfasında ürünler başarıyla listeleniyor ancak kart boyutları göze çok küçük geliyor ve ürünü sisteme ekleyen bayinin (satıcının) kim olduğu kartta yazmıyor. 
 
-Lütfen Frontend ve Backend arasındaki veri akışını eşleştirmek için şu 3 adımı uygula:
+Lütfen ürünü ekrana basan JS dosyasındaki (veya HTML içindeki) kart şablonunu (template literal) şu 2 adıma göre derhal güncelle:
 
-### ADIM 1: FRONTEND VERİ EŞLEŞTİRMESİ (MAPPING KONTROLÜ)
-- `store.html` (veya ilgili JS) içindeki `fetchProducts` fonksiyonuna git. 
-- Gelen veriyi döngüye sokmadan hemen önce konsola yazdır: `console.log("Gelen Veri:", data);`
-- Backend veriyi `{ success: true, data: [...] }` formatında sarmalıyorsa, frontend'deki döngünün `data.map` değil KESİNLİKLE `data.data.map` olduğundan emin ol. (Veya backend direkt array dönüyorsa frontend'i buna göre düzelt).
-- HTML şablonunun içindeki değişkenlerin (Örn: `${product.name}`, `${product.price}`) Prisma modelindeki sütun isimleriyle BİREBİR aynı olduğunu kontrol et.
+### ADIM 1: SATICI (BAYİ) ETİKETİ EKLENMESİ
+- API'den dönen verideki satıcı/bayi bilgisini (Örn: `product.user.companyName`, `product.user.name` veya satıcı adı hangi değişkendeyse onu) çek.
+- Ürün görselinin hemen altına veya ürün başlığının (Title) üstüne şık, dikkat çekici bir Tailwind rozeti (Badge) ekle. 
+- **Örnek Tasarım:** `<div class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-semibold mb-2 shadow-sm"><svg ...>🏪</svg> Satıcı: ${product.user.companyName || 'Bilinmiyor'}</div>`
 
-### ADIM 2: BACKEND PRISMA FİLTRELERİNİ ESNETME
-- Backend'de `GET /api/store/products` (veya ilgili endpoint) route'unu bul.
-- Eğer Prisma sorgusunda `where: { isActive: true }` veya `status: 'APPROVED'` gibi filtreler varsa, test amaçlı bu `where` bloğunu GEÇİCİ OLARAK YORUMA AL VEYA SİL. Belki bayi paneli ürünü eklerken varsayılan olarak `isActive: false` atıyordur.
-- Vitrinde tüm ürünler koşulsuz listelenecek şekilde `findMany()` sorgusunu sadeleştir.
+### ADIM 2: KART VE GÖRSEL BOYUTLARINI BÜYÜTME
+- Ürünleri saran ana Grid kapsayıcısını (`<div class="grid...">`) bul. Sütun sayısını azaltarak kartların ekranda daha geniş yer kaplamasını sağla (Örneğin `lg:grid-cols-4` veya `5` ise, bunu kartları daha geniş tutacak şekilde `lg:grid-cols-3 xl:grid-cols-3` olarak değiştir).
+- Kartın içindeki ürün görseli (image) kapsayıcısının yüksekliğini belirgin şekilde artır. Mevcutta `h-32` veya `h-40` ise bunu en az `h-52` veya `h-60` yap. Görselin net görünmesi ve kesilmemesi için `object-contain` class'ının olduğundan emin ol.
+- Ürün başlığı (Title) ve Fiyat (Price) fontunu bir kademe büyüt ki kartın yeni boyutlarıyla orantılı dursun (Örn: Başlığı `text-base font-bold` yap).
 
-### ADIM 3: BAYİ PANELİ VERİTABANI KONTROLÜ (DB URL)
-- Bayi panelinin (`bayi.html`) ürün eklemek için istek attığı POST URL'sinin de KESİNLİKLE Render üzerindeki canlı API'ye (`https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/...`) gittiğinden emin ol. 
-- Eğer Bayi paneli eski `localhost` API'sine istek atıyorsa, ürün senin bilgisayarındaki lokal veritabanına kaydolur ama vitrin Render'dan okumaya çalıştığı için boş gelir. Her iki panelin de AYNI canlı adrese bağlı olduğunu doğrula.
-
-**EMİR:** Sorun kod hatası değil, veri objesi eşleşme (JSON mapping) veya veritabanı farklılığı sorunudur. `console.log` ile verinin nerede kaybolduğunu tespit et ve eşleştir.
+**EMİR:** Kartın mevcut şık tasarımını bozmadan, B2B alıcısının "bu ürünü hangi bayiden alıyorum" sorusuna cevap verecek şekilde satıcı adını ekle ve grid yapısını esneterek kartları daha görünür/büyük hale getir.

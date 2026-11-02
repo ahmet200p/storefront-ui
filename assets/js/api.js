@@ -1947,6 +1947,13 @@
             manufacturer: seed.manufacturer || '',
             estimatedLaborTime: seed.estimatedLaborTime || lr.estimatedLaborTime,
             isDiscounted: discountRate > 0,
+            companyName: 'Ahmet Oto (Yetkili Bayi)',
+            dealerName: 'Ahmet Oto (Yetkili Bayi)',
+            sellerName: 'Ahmet Oto (Yetkili Bayi)',
+            user: {
+              companyName: 'Ahmet Oto (Yetkili Bayi)',
+              name: 'Ahmet Oto'
+            },
             defaultPrice: listP,
             customPrice: listP,
             discountedPrice: finP,
