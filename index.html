@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="description" content="ParçaPro B2B Toptan Otomotiv Yedek Parça Pazaryeri ve Tedarik Portalı - Şasi Numarası ile %100 Uyum Doğrulama">
-  <title>Volkswagen Golf VII Uyumlu Tüm Yedek Parçalar | ParçaPro B2B</title>
+  <title>ParçaPro B2B | Otomotiv Yedek Parça Pazaryeri</title>
 
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -329,13 +329,12 @@
   <section class="bg-white border-b border-slate-200 py-5" aria-label="Katalog Başlığı ve Metrikler">
     <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
       
-      <!-- Left: Title & Subtitle -->
+      <!-- Left: Title & Subtitle (prompt.md ADIM 2 & 3: Dinamik Başlık ve Kriter Sayacı) -->
       <div>
-        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" id="catalog-main-title">
-          Volkswagen Golf VII Uyumlu Tüm Yedek Parçalar
-        </h1>
+        <h1 class="hidden text-xl sm:text-2xl font-black text-slate-900 tracking-tight" id="dynamic-page-title"></h1>
         <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1" id="catalog-subtitle">
-          Toplam <strong class="text-slate-900 font-bold" id="title-total-count">348</strong> parça listeleniyor. (3 arama kriteri devrede ve B2B toptancı iskonto şartı aktif)
+          Toplam <strong class="text-slate-900 font-bold" id="title-total-count">0</strong> parça listeleniyor.
+          <span id="dynamic-criteria-text" class="hidden text-orange-600 font-bold ml-1"></span>
         </p>
       </div>
 
@@ -376,27 +375,7 @@
            ==================================================================== -->
       <aside class="w-full lg:w-72 shrink-0 space-y-4" id="store-sidebar">
         
-        <!-- Card 1: Seçili Araç (Blue Theme Card) -->
-        <div class="bg-blue-50/90 border border-blue-200 rounded-2xl p-4 shadow-xs" id="sidebar-vehicle-card">
-          <div class="flex items-center justify-between pb-2 border-b border-blue-200/80 mb-2.5">
-            <div class="flex items-center gap-1.5">
-              <span class="text-sm">🚗</span>
-              <span class="text-xs font-black uppercase tracking-wider text-blue-900">Seçili Araç</span>
-            </div>
-            <button type="button" onclick="openVehicleSelectorModal()" class="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 uppercase tracking-wider cursor-pointer">
-              DEĞİŞTİR
-            </button>
-          </div>
-          <h3 class="text-sm font-black text-slate-900 leading-snug" id="sidebar-vehicle-title">Volkswagen Golf VII</h3>
-          <p class="text-xs text-slate-600 font-medium mt-0.5" id="sidebar-vehicle-desc">1.6 TDI (115 HP) 2016-2020, Dizel</p>
-          <div class="text-[11px] font-mono text-slate-500 mt-1" id="sidebar-vehicle-chassis">Şasi Kodu: 5G1 / BQ1 / BE1</div>
-          <button type="button" onclick="openVehicleSelectorModal()" class="w-full mt-3 py-2 px-3 bg-white hover:bg-blue-600 hover:text-white text-blue-700 border border-blue-300 font-bold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer">
-            <span>🚗</span>
-            <span>Farklı Araç Seç</span>
-          </button>
-        </div>
-
-        <!-- Card 2: OEM / Parça Kodu ile Filtrele -->
+        <!-- Card: OEM / Parça Kodu ile Filtrele -->
         <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
           <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider mb-1">OEM / Parça Kodu ile Filtrele</h4>
           <p class="text-[11px] text-slate-500 mb-2.5">Özel Parça Kodu veya OE Numarası girin</p>
@@ -597,8 +576,8 @@
           </div>
         </div>
 
-        <!-- Products Grid Container (prompt.md ADIM 2: lg:grid-cols-3 xl:grid-cols-3 gap-6 ile büyütüldü) -->
-        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        <!-- Products Grid Container (prompt.md ADIM 1: lg:grid-cols-3 gap-6 ile büyütüldü) -->
+        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <!-- Dinamik olarak JS ile çizdirilir -->
         </div>
 
@@ -671,11 +650,11 @@
 
         <!-- ==================================================================
              TECHNICAL BUYING GUIDE CARD
-             "Volkswagen Golf VII Fren Parçaları Satın Alma Rehberi"
+             "Otomotiv Yedek Parçaları Satın Alma Rehberi"
              ================================================================== -->
         <div class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xs" id="technical-buying-guide-section">
           <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-100 flex items-center justify-between" id="guide-header-title">
-            <span>Volkswagen Golf VII Fren Parçaları Satın Alma Rehberi</span>
+            <span>Otomotiv Yedek Parçaları Satın Alma Rehberi</span>
             <span class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full">B2B Teknik Kılavuz</span>
           </h2>
 
@@ -686,7 +665,7 @@
               <div>
                 <h3 class="font-black text-slate-900 mb-1">PR Kodları ve Disk Çapları:</h3>
                 <p>
-                  Volkswagen Golf VII modellerinde fabrika çıkış donanıma bağlı olarak farklı ön disk çapları (276mm, 288mm veya 312mm) bulunmaktadır. 1.6 TDI motor seçeneklerinde çoğunlukla 288mm havalandırmalı ön diskler kullanılır. Sipariş vermeden önce bagaj havuzundaki etikette yer alan <strong>1ZA / 1ZE</strong> kodlarını kontrol etmeniz önerilir.
+                  Modern binek ve ticari araç modellerinde fabrika çıkış donanıma bağlı olarak farklı ön disk çapları (276mm, 288mm veya 312mm) bulunmaktadır. Doğru parçayı seçmek için aracınızın teknik kılavuzundaki ve bagaj havuzundaki etikette yer alan <strong>PR kodlarını (Örn: 1ZA / 1ZE)</strong> kontrol etmeniz önerilir.
                 </p>
               </div>
 
@@ -951,18 +930,26 @@
       <!-- Araç Listesi -->
       <div class="space-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="vehicle-modal-list">
         
-        <!-- Golf 7 (Default) -->
+        <!-- Golf 7 -->
         <div onclick="selectVehicle('golf7', 'Volkswagen Golf VII', '1.6 TDI (115 HP) 2016-2020, Dizel', '5G1 / BQ1 / BE1', 'WVWZZZAUZHP129841', 'Volkswagen')"
-             class="p-3 rounded-2xl border-2 border-orange-500 bg-orange-50/40 hover:bg-orange-50 cursor-pointer transition-all flex items-center justify-between vehicle-item-active">
+             class="p-3 rounded-2xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 cursor-pointer transition-all flex items-center justify-between">
           <div>
-            <div class="font-black text-sm text-slate-900 flex items-center gap-1.5">
-              <span>Volkswagen Golf VII</span>
-              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-orange-200 text-orange-900">Aktif</span>
-            </div>
+            <div class="font-black text-sm text-slate-900">Volkswagen Golf VII</div>
             <div class="text-xs text-slate-600 font-medium">1.6 TDI (115 HP) 2016-2020, Dizel</div>
             <div class="text-[10px] font-mono text-slate-400 mt-0.5">VIN: WVWZZZAUZHP129841 • PR: 1ZA/1ZE</div>
           </div>
-          <span class="text-xs font-black text-orange-600">Seçili ✓</span>
+          <span class="text-xs font-bold text-slate-400">Seç ➔</span>
+        </div>
+
+        <!-- Hyundai Tucson -->
+        <div onclick="selectVehicle('tucson', 'Hyundai Tucson', '1.6 CRDi (136 HP) 2021, Dizel', 'TL / NX4', 'KMHJ381BBLU192841', 'Hyundai')"
+             class="p-3 rounded-2xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="font-black text-sm text-slate-900">Hyundai Tucson</div>
+            <div class="text-xs text-slate-600 font-medium">1.6 CRDi (136 HP) 2019-2023, Dizel</div>
+            <div class="text-[10px] font-mono text-slate-400 mt-0.5">VIN: KMHJ381BBLU192841 • Plaka: 34 HYU 90</div>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Seç ➔</span>
         </div>
 
         <!-- Megane IV -->
@@ -1137,7 +1124,7 @@
     let favorites = [];
 
     // Filter States
-    let currentBrand = 'Volkswagen';
+    let currentBrand = '';
     let currentCategory = 'Fren Sistemi';
     let currentSubCategories = [];
     let currentManufacturers = [];
@@ -1150,15 +1137,8 @@
     let currentSort = 'smart';
     let viewMode = 'grid';
 
-    // Active Vehicle Profile (Default: Volkswagen Golf VII as in screenshot)
-    let activeVehicle = {
-      code: 'golf7',
-      name: 'Volkswagen Golf VII',
-      desc: '1.6 TDI (115 HP) 2016-2020, Dizel',
-      chassis: 'Şasi Kodu: 5G1 / BQ1 / BE1',
-      vin: 'WVWZZZAUZHP129841',
-      brand: 'Volkswagen'
-    };
+    // Active Vehicle Profile (Default: null - hiçbir araç/marka seçili değil)
+    let activeVehicle = null;
 
     // --------------------------------------------------------------------------
     // 1. INITIALIZATION & DATA FETCHING
@@ -1167,6 +1147,8 @@
       loadCartFromStorage();
       loadFavoritesFromStorage();
       checkAuthState();
+      initSidebarListeners();
+      buildAndFetchFilters();
       await fetchProducts();
     });
 
@@ -1313,10 +1295,96 @@
     window.loadProducts = loadProducts;
 
     // --------------------------------------------------------------------------
+    // DYNAMIC PAGE TITLE & FILTER CRITERIA COUNTER (prompt.md ADIM 2 & ADIM 3)
+    // --------------------------------------------------------------------------
+    function initSidebarListeners() {
+      const sidebar = document.getElementById('store-sidebar');
+      if (sidebar) {
+        sidebar.addEventListener('change', function() {
+          buildAndFetchFilters();
+        });
+        sidebar.addEventListener('input', function() {
+          buildAndFetchFilters();
+        });
+      }
+    }
+
+    function buildAndFetchFilters(paramBrand) {
+      if (typeof paramBrand === 'string') {
+        currentBrand = paramBrand;
+        if (activeVehicle && paramBrand) {
+          activeVehicle.brand = paramBrand;
+          activeVehicle.name = paramBrand;
+        }
+      }
+
+      const dynamicTitle = document.getElementById('dynamic-page-title');
+      const criteriaText = document.getElementById('dynamic-criteria-text');
+
+      // ADIM 2: Marka / Model tespit et ve başlığı dinamikleştir
+      const secilenMarka = currentBrand || (activeVehicle && (activeVehicle.brand || activeVehicle.name)) || '';
+
+      if (dynamicTitle) {
+        if (secilenMarka && secilenMarka.trim() !== '' && secilenMarka.toLowerCase() !== 'all') {
+          dynamicTitle.textContent = `${secilenMarka} Uyumlu Tüm Yedek Parçalar`;
+          dynamicTitle.classList.remove('hidden');
+          dynamicTitle.style.display = '';
+          document.title = `${secilenMarka} Uyumlu Tüm Yedek Parçalar | ParçaPro B2B`;
+        } else {
+          dynamicTitle.textContent = '';
+          dynamicTitle.classList.add('hidden');
+          document.title = 'ParçaPro B2B | Otomotiv Yedek Parça Pazaryeri';
+        }
+      }
+
+      // ADIM 3: Sol menüdeki aktif filtre (checkbox) sayısını hesapla
+      const sidebar = document.getElementById('store-sidebar');
+      const checkedBoxes = sidebar ? sidebar.querySelectorAll('input[type="checkbox"]:checked') : [];
+      const aktifFiltreSayisi = checkedBoxes.length;
+
+      if (criteriaText) {
+        if (aktifFiltreSayisi > 0) {
+          criteriaText.textContent = `(${aktifFiltreSayisi} arama kriteri devrede)`;
+          criteriaText.classList.remove('hidden');
+          criteriaText.style.display = '';
+        } else {
+          criteriaText.textContent = '';
+          criteriaText.classList.add('hidden');
+        }
+      }
+    }
+    window.buildAndFetchFilters = buildAndFetchFilters;
+    window.updateDynamicHeaders = buildAndFetchFilters;
+
+    function selectBrand(brand) {
+      currentBrand = brand || '';
+      if (activeVehicle) {
+        activeVehicle.brand = brand;
+      }
+      buildAndFetchFilters();
+      applyClientFilters();
+    }
+    window.selectBrand = selectBrand;
+
+    // --------------------------------------------------------------------------
     // 2. CLIENT-SIDE FILTERING & RENDERING
     // --------------------------------------------------------------------------
     function applyClientFilters() {
+      buildAndFetchFilters();
+
       let filtered = [...allProducts];
+
+      // Marka / Model filtresi
+      if (currentBrand && currentBrand !== 'all') {
+        const b = currentBrand.trim().toLowerCase();
+        filtered = filtered.filter(p => {
+          const pb = (p.vehicleBrand || '').toLowerCase();
+          const pm = (p.compatibleModels || '').toLowerCase();
+          const pn = (p.name || '').toLowerCase();
+          const mfr = (p.manufacturer || '').toLowerCase();
+          return pb.includes(b) || pm.includes(b) || pn.includes(b) || mfr.includes(b);
+        });
+      }
 
       // OEM Code filter
       if (currentOemFilter) {
@@ -1400,15 +1468,14 @@
         return;
       }
 
-      grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6';
+      grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
       grid.innerHTML = displayedProducts.map((p, idx) => {
         const id = p.tenantProductId || p.productId || p.id || `prod-${idx}`;
         const oe = p.oeNumber || '5Q0 698 151';
         const name = p.name || 'Yedek Parça';
         const brand = p.manufacturer || p.vehicleBrand || 'OEM';
         const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
-        const labor = p.estimatedLaborTime || '45 Dk';
-        const seller = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'Ahmet Oto (Yetkili Bayi)';
+        const sellerName = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'AFS Bayisi';
         const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
         const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
         const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : 14, 10);
@@ -1434,8 +1501,8 @@
                 </div>
               </div>
 
-              <!-- prompt.md ADIM 2: Büyütülmüş Görsel Alanı (h-56 sm:h-60 ve max-h-52 object-contain) -->
-              <div class="relative h-56 sm:h-60 bg-slate-50/80 rounded-2xl overflow-hidden flex items-center justify-center p-4 cursor-pointer" onclick="openProductDetailModal('${id}')">
+              <!-- prompt.md ADIM 1: Büyütülmüş Görsel Alanı (h-56 ve max-h-52 object-contain) -->
+              <div class="relative h-56 bg-slate-50/80 rounded-2xl overflow-hidden flex items-center justify-center p-4 cursor-pointer" onclick="openProductDetailModal('${id}')">
                 <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-52 object-contain group-hover:scale-105 transition-transform duration-300">
                 ${stock > 0 ? `
                   <span class="absolute bottom-2.5 left-2.5 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-xs">
@@ -1452,28 +1519,24 @@
             <!-- Ürün Bilgileri -->
             <div class="p-4 pt-3 flex-1 flex flex-col justify-between">
               <div>
-                
-                <!-- prompt.md ADIM 1: Satıcı (Bayi) Etiketi -->
-                <div class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-1 rounded-md text-xs font-semibold mb-2.5 shadow-xs">
-                  <span class="text-sm">🏪</span>
-                  <span class="truncate">Satıcı: <strong class="font-bold text-indigo-900">${escapeHtml(seller)}</strong></span>
-                </div>
-
-                <!-- prompt.md ADIM 2: Büyütülmüş Başlık (text-base font-bold) -->
+                <!-- Ürün Başlığı (text-base font-bold) -->
                 <h3 class="text-base font-bold text-slate-900 line-clamp-2 hover:text-orange-600 cursor-pointer transition-colors leading-snug" onclick="openProductDetailModal('${id}')" title="${escapeHtml(name)}">
                   ${escapeHtml(name)}
                 </h3>
+                
+                <!-- Araç Uyumluluk Yazısı -->
                 <div class="text-xs text-slate-500 font-medium truncate mt-1">🚗 ${escapeHtml(models)}</div>
                 
-                <!-- Tahmini İşçilik Rozeti -->
-                <div class="mt-2">
-                  <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                    <span>⏱️</span> Tahmini İşçilik: ${escapeHtml(labor)}
-                  </span>
+                <!-- prompt.md ADIM 3: Araç Uyumluluğunun hemen altına "Bayi Adı" Etiketi -->
+                <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200 mt-2 shadow-2xs">
+                  <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <span>Satıcı: <strong class="font-semibold text-slate-900">${escapeHtml(sellerName)}</strong></span>
                 </div>
               </div>
 
-              <!-- Fiyat ve Sepet Butonları (prompt.md ADIM 2: Büyütülmüş Fiyat ve Buton) -->
+              <!-- Fiyat ve Sepet Butonları (prompt.md ADIM 1: Büyütülmüş Fiyat ve Buton) -->
               <div class="mt-4 pt-3 border-t border-slate-100">
                 <div class="flex items-baseline justify-between mb-2.5">
                   <div>
@@ -1515,7 +1578,6 @@
               <th class="p-3">Satıcı (Bayi)</th>
               <th class="p-3">Marka</th>
               <th class="p-3">Uyumlu Araç</th>
-              <th class="p-3">Tahmini İşçilik</th>
               <th class="p-3">Stok</th>
               <th class="p-3">Net B2B Fiyat</th>
               <th class="p-3 text-right">İşlem</th>
@@ -1528,8 +1590,7 @@
               const name = p.name || 'Parça';
               const brand = p.manufacturer || p.vehicleBrand || 'OEM';
               const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
-              const labor = p.estimatedLaborTime || '45 Dk';
-              const seller = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'Ahmet Oto';
+              const seller = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'AFS Bayisi';
               const netPrice = parseFloat(p.discountedPrice || p.price || p.customPrice || p.defaultPrice || 1450);
               const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : 14, 10);
               const img = p.imageUrl || '';
@@ -1538,10 +1599,9 @@
                 <tr class="hover:bg-slate-50/80 transition-colors">
                   <td class="p-3 font-mono font-bold text-slate-900">${escapeHtml(oe)}</td>
                   <td class="p-3 font-bold text-slate-900 cursor-pointer hover:text-orange-600" onclick="openProductDetailModal('${id}')">${escapeHtml(name)}</td>
-                  <td class="p-3"><span class="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">🏪 ${escapeHtml(seller)}</span></td>
+                  <td class="p-3"><span class="inline-flex items-center gap-1 font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"><svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> Satıcı: ${escapeHtml(seller)}</span></td>
                   <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">${escapeHtml(brand)}</span></td>
                   <td class="p-3 text-slate-500">${escapeHtml(models)}</td>
-                  <td class="p-3 text-indigo-700 font-bold">${escapeHtml(labor)}</td>
                   <td class="p-3"><span class="font-bold text-emerald-600">${stock} Adet</span></td>
                   <td class="p-3 font-mono font-bold text-slate-900">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
                   <td class="p-3 text-right">
@@ -1671,6 +1731,8 @@
       currentMaxPrice = 0;
       currentInStockOnly = false;
       currentSort = 'smart';
+      currentBrand = '';
+      activeVehicle = null;
 
       const sInput = document.getElementById('store-search-input');
       if (sInput) sInput.value = '';
@@ -1685,7 +1747,9 @@
 
       document.querySelectorAll('#filter-subcategories-list input').forEach(cb => cb.checked = false);
       document.querySelectorAll('#filter-manufacturers-list input').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#store-sidebar input[type="checkbox"]').forEach(cb => cb.checked = false);
 
+      buildAndFetchFilters();
       loadProducts();
     }
 
@@ -1713,6 +1777,9 @@
       } else if (rawVin.startsWith('WF0')) {
         selectVehicle('focus', 'Ford Focus III/IV', '1.5 TDCi (120 HP) 2018, Dizel', 'C346', rawVin, 'Ford');
         showToast('✓ Şasi Doğrulandı: Ford Focus 1.5 TDCi uyumlu parçalar filtrelendi!', 'success');
+      } else if (rawVin.startsWith('KMH') || rawVin.startsWith('MAL')) {
+        selectVehicle('tucson', 'Hyundai Tucson', '1.6 CRDi (136 HP) 2021, Dizel', 'TL / NX4', rawVin, 'Hyundai');
+        showToast('✓ Şasi Doğrulandı: Hyundai Tucson 1.6 CRDi uyumlu parçalar filtrelendi!', 'success');
       } else {
         currentSearchQuery = rawVin;
         loadProducts();
@@ -1749,24 +1816,17 @@
     }
 
     function selectVehicle(code, name, desc, chassis, vin, brand) {
-      activeVehicle = { code, name, desc, chassis, vin, brand };
-      currentBrand = brand;
+      activeVehicle = { code, name, desc, chassis, vin, brand: brand || name };
+      currentBrand = brand || name;
 
       // DOM Güncellemesi
-      const tEl = document.getElementById('sidebar-vehicle-title');
-      const dEl = document.getElementById('sidebar-vehicle-desc');
-      const cEl = document.getElementById('sidebar-vehicle-chassis');
-      const mainTitle = document.getElementById('catalog-main-title');
       const guideTitle = document.getElementById('guide-header-title');
       const vinInput = document.getElementById('vin-banner-input');
 
-      if (tEl) tEl.textContent = name;
-      if (dEl) dEl.textContent = desc;
-      if (cEl) cEl.textContent = `Şasi Kodu: ${chassis}`;
-      if (mainTitle) mainTitle.textContent = `${name} Uyumlu Tüm Yedek Parçalar`;
       if (guideTitle) guideTitle.innerHTML = `<span>${name} Parçaları Satın Alma Rehberi</span><span class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full">B2B Teknik Kılavuz</span>`;
       if (vinInput && vin) vinInput.value = vin;
 
+      buildAndFetchFilters();
       closeVehicleSelectorModal();
       loadProducts();
     }
@@ -2013,7 +2073,7 @@
       const oe = prod.oeNumber || '5Q0 698 151';
       const name = prod.name || 'Yedek Parça';
       const brand = prod.manufacturer || prod.vehicleBrand || 'OEM';
-      const models = prod.compatibleModels || activeVehicle.name;
+      const models = prod.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
       const labor = prod.estimatedLaborTime || '45 Dk';
       const netPrice = parseFloat(prod.discountedPrice || prod.defaultPrice || 1450);
       const listPrice = parseFloat(prod.defaultPrice || prod.listPrice || (netPrice * 1.25));
@@ -2191,7 +2251,7 @@
                   <span class="font-bold text-slate-900">Sipariş: SP-2026-8491</span>
                   <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Kargoya Verildi</span>
                 </div>
-                <div class="text-slate-600">Volkswagen Golf VII Ön Fren Balata Takımı x 2 Adet</div>
+                <div class="text-slate-600">Ön Fren Balata Takımı x 2 Adet</div>
                 <div class="flex justify-between items-center pt-1 text-slate-500 font-mono">
                   <span>Takip: Yurtiçi Kargo - 81924018</span>
                   <strong class="text-slate-900 text-sm">₺2,900.00</strong>

@@ -1,17 +1,20 @@
-# GÖREV: Ürün Kartı (Product Card) Tasarımını Büyütme ve Satıcı Etiketi Ekleme
+# GÖREV: Vitrin UI Statik Alanların Temizlenmesi ve Dinamik Başlık Kurgusu
 
-**DURUM:** `store.html` sayfasında ürünler başarıyla listeleniyor ancak kart boyutları göze çok küçük geliyor ve ürünü sisteme ekleyen bayinin (satıcının) kim olduğu kartta yazmıyor. 
+**GÖREV BİLDİRİMİ:**
+`store.html` sayfasındaki üst başlık alanı ve sol menüdeki araç seçim kutusu statik (hardcoded) verilerle dolu. Tasarımı sadeleştirmek ve başlıkları kullanıcının filtrelerine göre dinamik hale getirmek için HTML ve JS dosyalarında şu 3 adımı DERHAL uygula:
 
-Lütfen ürünü ekrana basan JS dosyasındaki (veya HTML içindeki) kart şablonunu (template literal) şu 2 adıma göre derhal güncelle:
+### ADIM 1: "SEÇİLİ ARAÇ" KUTUSUNU TAMAMEN SİL
+- Sol menünün (Sidebar) en üstünde yer alan, içinde "Volkswagen Golf VII" yazan ve "Farklı Araç Seç" butonu barındıran **"SEÇİLİ ARAÇ"** kapsayıcı kutusunu (div) HTML'den TAMAMEN SİL. (Bu alan şimdilik boş kalacak, ileride yeniden kurgulanacak).
 
-### ADIM 1: SATICI (BAYİ) ETİKETİ EKLENMESİ
-- API'den dönen verideki satıcı/bayi bilgisini (Örn: `product.user.companyName`, `product.user.name` veya satıcı adı hangi değişkendeyse onu) çek.
-- Ürün görselinin hemen altına veya ürün başlığının (Title) üstüne şık, dikkat çekici bir Tailwind rozeti (Badge) ekle. 
-- **Örnek Tasarım:** `<div class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-semibold mb-2 shadow-sm"><svg ...>🏪</svg> Satıcı: ${product.user.companyName || 'Bilinmiyor'}</div>`
+### ADIM 2: ANA BAŞLIĞI DİNAMİKLEŞTİR VE GİZLE
+- Sayfanın üst kısmındaki `<h1>` (veya `<h2>`) etiketli **"Volkswagen Golf VII Uyumlu Tüm Yedek Parçalar"** yazan başlığa bir ID ver (Örn: `dynamic-page-title`).
+- Bu başlığı sayfa ilk yüklendiğinde varsayılan olarak GİZLİ (`hidden` veya `display: none`) yap.
+- JS dosyasındaki `buildAndFetchFilters()` (veya filtreleri dinleyen) fonksiyonun içine şu mantığı ekle: Eğer kullanıcı Marka/Model filtrelerinden birini seçerse (Örn: Hyundai), başlığın gizliliğini kaldır ve içindeki metni `${secilenMarka} Uyumlu Tüm Yedek Parçalar` olarak dinamik şekilde güncelle. Hiçbir marka/araç seçili değilse başlık gizli kalmaya devam etsin.
 
-### ADIM 2: KART VE GÖRSEL BOYUTLARINI BÜYÜTME
-- Ürünleri saran ana Grid kapsayıcısını (`<div class="grid...">`) bul. Sütun sayısını azaltarak kartların ekranda daha geniş yer kaplamasını sağla (Örneğin `lg:grid-cols-4` veya `5` ise, bunu kartları daha geniş tutacak şekilde `lg:grid-cols-3 xl:grid-cols-3` olarak değiştir).
-- Kartın içindeki ürün görseli (image) kapsayıcısının yüksekliğini belirgin şekilde artır. Mevcutta `h-32` veya `h-40` ise bunu en az `h-52` veya `h-60` yap. Görselin net görünmesi ve kesilmemesi için `object-contain` class'ının olduğundan emin ol.
-- Ürün başlığı (Title) ve Fiyat (Price) fontunu bir kademe büyüt ki kartın yeni boyutlarıyla orantılı dursun (Örn: Başlığı `text-base font-bold` yap).
+### ADIM 3: "3 ARAMA KRİTERİ" YAZISINI DİNAMİK SAYACA BAĞLA
+- Ana başlığın altındaki **"(3 arama kriteri devrede ve B2B toptancı iskonto şartı aktif)"** yazısını kapsayan `span` veya `p` etiketine bir ID ver (Örn: `dynamic-criteria-text`).
+- Sayfa ilk açıldığında bu yazıyı GİZLİ (`hidden`) yap veya içini boşalt.
+- JS tarafında: Kullanıcının sol menüden seçtiği aktif filtre (checkbox) sayısını hesapla.
+- Eğer aktif filtre sayısı 0'dan büyükse: Yazıyı görünür yap ve içine `(${aktifFiltreSayisi} arama kriteri devrede)` yazdır. Eğer filtre sıfırlanırsa (0 olursa) bu yazıyı tekrar gizle.
 
-**EMİR:** Kartın mevcut şık tasarımını bozmadan, B2B alıcısının "bu ürünü hangi bayiden alıyorum" sorusuna cevap verecek şekilde satıcı adını ekle ve grid yapısını esneterek kartları daha görünür/büyük hale getir.
+**EMİR:** Söylenen yerlerdeki statik yazıları (Volkswagen vs.) HTML'den temizle. Başlık ve kriter yazısını sadece filtre seçildiğinde JS ile doldurup görünür hale getirecek mantığı kur.
