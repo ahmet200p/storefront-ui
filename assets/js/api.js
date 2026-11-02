@@ -1636,10 +1636,22 @@
       // Parse query params if any
       let brandFilter = '';
       let searchFilter = '';
+      let categoryFilter = '';
+      let subCatFilter = '';
+      let mfrFilter = '';
+      let inStockFilter = false;
+      let minPriceFilter = 0;
+      let maxPriceFilter = 0;
       try {
         const parsedUrl = new URL(endpoint, 'https://saas-g-ncel-10-10-2026simdi-main.onrender.com');
         brandFilter = (parsedUrl.searchParams.get('brand') || '').trim().toLowerCase();
         searchFilter = (parsedUrl.searchParams.get('search') || '').trim().toLowerCase();
+        categoryFilter = (parsedUrl.searchParams.get('category') || '').trim().toLowerCase();
+        subCatFilter = (parsedUrl.searchParams.get('subCategory') || '').trim().toLowerCase();
+        mfrFilter = (parsedUrl.searchParams.get('manufacturer') || '').trim().toLowerCase();
+        inStockFilter = parsedUrl.searchParams.get('inStock') === 'true';
+        minPriceFilter = parseFloat(parsedUrl.searchParams.get('minPrice') || '0') || 0;
+        maxPriceFilter = parseFloat(parsedUrl.searchParams.get('maxPrice') || '0') || 0;
       } catch (e) {}
 
       let calculated = (store.tenantCatalog || []).map(tc => {
@@ -1681,115 +1693,236 @@
       // Otomotiv Seed Kataloğu (Yerel Demo & Çevrimdışı Güvencesi)
       if (calculated.length === 0) {
         const defaultSeeds = [
+          // ============================================================
+          // VOLKSWAGEN GOLF VII FREN SİSTEMİ & PARÇAPRO KATALOĞU
+          // ============================================================
           {
-            name: 'Triger Kayış Kiti & Gergi Rulmanı',
-            oeNumber: '130C15339R',
-            vehicleBrand: 'Renault',
-            category: 'Motor Parçaları',
-            partGroup: 'Motor & Mekanik',
-            compatibleModels: 'Megane IV, Clio V, Captur II 1.5 dCi',
-            defaultPrice: 2850,
-            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Ön Fren Balata Takımı (Sensörlü)',
-            oeNumber: '410601241R',
-            vehicleBrand: 'Renault',
-            category: 'Fren Sistemi',
-            partGroup: 'Fren Sistemi',
-            compatibleModels: 'Megane IV, Clio V, Talisman, Kadjar',
-            defaultPrice: 1250,
-            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Ön Fren Diski Havalandırmalı (280mm Takım)',
-            oeNumber: '402060010R',
-            vehicleBrand: 'Renault',
-            category: 'Fren Sistemi',
-            partGroup: 'Fren Sistemi',
-            compatibleModels: 'Megane IV, Clio V, Dacia Duster',
-            defaultPrice: 1800,
-            imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Yağ Filtresi Vidalı Tip',
-            oeNumber: '8200768913',
-            vehicleBrand: 'Renault',
-            category: 'Filtreler',
-            partGroup: 'Filtre & Bakım',
-            compatibleModels: 'Renault, Dacia 1.5 dCi Tüm Modeller, Megane IV',
-            defaultPrice: 280,
-            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Hava Filtresi Paneli',
-            oeNumber: '165467674R',
-            vehicleBrand: 'Renault',
-            category: 'Filtreler',
-            partGroup: 'Filtre & Bakım',
-            compatibleModels: 'Megane IV, Clio V, Captur II',
-            defaultPrice: 320,
-            imageUrl: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Devirdaim Su Pompası (Metal Yüksek Debi Çark)',
-            oeNumber: '210100495R',
-            vehicleBrand: 'Renault',
-            category: 'Soğutma & Isıtma',
-            partGroup: 'Soğutma & Isıtma',
-            compatibleModels: 'Renault Clio IV/V, Megane III/IV 1.5 dCi',
-            defaultPrice: 1500,
-            imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Karbonlu Polen Kabin Filtresi',
-            oeNumber: '272778970R',
-            vehicleBrand: 'Renault',
-            category: 'Filtreler',
-            partGroup: 'Filtre & Bakım',
-            compatibleModels: 'Megane IV, Talisman, Espace V',
-            defaultPrice: 340,
-            imageUrl: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&auto=format&fit=crop&q=80'
-          },
-          {
-            name: 'Ön Fren Balata Takımı',
+            name: 'Volkswagen Golf VII Ön Fren Balatası (Sensörlü)',
             oeNumber: '5Q0698151B',
             vehicleBrand: 'Volkswagen',
             category: 'Fren Sistemi',
             partGroup: 'Fren Sistemi',
-            compatibleModels: 'Golf 7, Passat B8, Octavia III, Leon',
+            subCategory: 'Ön Fren Balatası',
+            manufacturer: 'Bosch',
+            compatibleModels: 'Volkswagen Golf VII (1.6 TDI, 1.4 TSI), Passat B8, Octavia III',
             defaultPrice: 1450,
-            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'
+            stock: 14,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '45 Dk'
           },
           {
-            name: 'Yağ & Yakıt Filtre Bakım Kiti',
+            name: 'Volkswagen Golf VII Ön Fren Balata Takımı (Orijinal VAG)',
+            oeNumber: '5Q0698151AA',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Ön Fren Balatası',
+            manufacturer: 'Orijinal VAG (OEM)',
+            compatibleModels: 'Volkswagen Golf VII 2016-2020, Seat Leon 5F, Audi A3 8V',
+            defaultPrice: 2150,
+            stock: 24,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '45 Dk'
+          },
+          {
+            name: 'Volkswagen Golf VII Ön Fren Balatası (Yüksek Performans)',
+            oeNumber: '5Q0698151',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Ön Fren Balatası',
+            manufacturer: 'Ferodo',
+            compatibleModels: 'Volkswagen Golf VII 1.6 TDI 115 HP, 2.0 TDI',
+            defaultPrice: 1320,
+            stock: 19,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '45 Dk'
+          },
+          {
+            name: 'Volkswagen Golf VII Arka Fren Balatası (Elektrikli Park Freni)',
+            oeNumber: '5Q0698451',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Arka Fren Balatası',
+            manufacturer: 'TRW / ZF',
+            compatibleModels: 'Volkswagen Golf VII Tüm Modeller, Passat B8, Tiguan',
+            defaultPrice: 1150,
+            stock: 12,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '40 Dk'
+          },
+          {
+            name: 'Volkswagen Golf VII Arka Fren Balata Takımı (Sessiz Tip)',
+            oeNumber: '8V0698451',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Arka Fren Balatası',
+            manufacturer: 'Textar',
+            compatibleModels: 'Volkswagen Golf VII, Audi A3 8V, Skoda Octavia III',
+            defaultPrice: 1080,
+            stock: 22,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '40 Dk'
+          },
+          {
+            name: 'Volkswagen Golf VII Ön Fren Diski 288x25mm Havalandırmalı (Takım)',
+            oeNumber: '5Q0615301H',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Ön Fren Diski',
+            manufacturer: 'Brembo',
+            compatibleModels: 'Volkswagen Golf VII 1.6 TDI (PR-1ZA, 1ZE), Passat B8',
+            defaultPrice: 2850,
+            stock: 18,
+            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '1 Saat'
+          },
+          {
+            name: 'Volkswagen Golf VII Ön Fren Diski 276mm (Hava Soğutmalı Takım)',
+            oeNumber: '5Q0615301G',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Ön Fren Diski',
+            manufacturer: 'Bosch',
+            compatibleModels: 'Volkswagen Golf VII 1.2 TSI, 1.6 TDI (PR-1ZF)',
+            defaultPrice: 2450,
+            stock: 15,
+            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '1 Saat'
+          },
+          {
+            name: 'Volkswagen Golf VII Arka Fren Diski 272x10mm Dolu Tip (Takım)',
+            oeNumber: '5Q0615601F',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Arka Fren Diski',
+            manufacturer: 'TRW / ZF',
+            compatibleModels: 'Volkswagen Golf VII, Skoda Octavia III, Seat Leon 5F',
+            defaultPrice: 1950,
+            stock: 16,
+            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '50 Dk'
+          },
+          {
+            name: 'Volkswagen Golf VII Fren Kaliperi Ön Sol (Komple Döküm)',
+            oeNumber: '5Q0615123',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Fren Kaliperi & Hortumlar',
+            manufacturer: 'TRW / ZF',
+            compatibleModels: 'Volkswagen Golf VII 2016-2020 Platformu',
+            defaultPrice: 3450,
+            stock: 8,
+            imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '1.5 Saat'
+          },
+          {
+            name: 'Volkswagen Golf VII Çelik Örgülü Fren Hortumu Ön Takım',
+            oeNumber: '5Q0611701C',
+            vehicleBrand: 'Volkswagen',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Fren Kaliperi & Hortumlar',
+            manufacturer: 'Valeo',
+            compatibleModels: 'Volkswagen Golf VII 1.6 TDI, GTD, R-Line',
+            defaultPrice: 680,
+            stock: 14,
+            imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '30 Dk'
+          },
+          {
+            name: 'Volkswagen Golf VII Yağ & Yakıt Filtre Bakım Kiti',
             oeNumber: '03N115562',
             vehicleBrand: 'Volkswagen',
             category: 'Filtreler',
             partGroup: 'Filtre & Bakım',
-            compatibleModels: 'Volkswagen Golf 7 1.6 TDI, Passat B8',
+            subCategory: 'Filtre & Bakım',
+            manufacturer: 'Bosch',
+            compatibleModels: 'Volkswagen Golf VII 1.6 TDI, Passat B8',
             defaultPrice: 850,
-            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80'
+            stock: 35,
+            imageUrl: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '45 Dk'
           },
           {
-            name: 'Ön Fren Balata Takımı',
+            name: 'Volkswagen Golf VII Triger Kayış Seti & Devirdaim Pompası',
+            oeNumber: '04L198119A',
+            vehicleBrand: 'Volkswagen',
+            category: 'Motor Parçaları',
+            partGroup: 'Motor & Şanzıman',
+            subCategory: 'Motor & Şanzıman',
+            manufacturer: 'Bosch',
+            compatibleModels: 'Volkswagen Golf VII 1.6 TDI (115 HP) 2016-2020',
+            defaultPrice: 4200,
+            stock: 12,
+            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '2.5 Saat'
+          },
+
+          // ============================================================
+          // DİĞER MODELLER (RENAULT, FIAT, FORD, BMW)
+          // ============================================================
+          {
+            name: 'Renault Megane IV Triger Kayış Kiti & Gergi Rulmanı',
+            oeNumber: '130C15339R',
+            vehicleBrand: 'Renault',
+            category: 'Motor Parçaları',
+            partGroup: 'Motor & Şanzıman',
+            subCategory: 'Motor & Şanzıman',
+            manufacturer: 'Orijinal VAG (OEM)',
+            compatibleModels: 'Megane IV, Clio V, Captur II 1.5 dCi',
+            defaultPrice: 2850,
+            stock: 20,
+            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '2.5 Saat'
+          },
+          {
+            name: 'Renault Megane IV Ön Fren Balata Takımı (Sensörlü)',
+            oeNumber: '410601241R',
+            vehicleBrand: 'Renault',
+            category: 'Fren Sistemi',
+            partGroup: 'Fren Sistemi',
+            subCategory: 'Ön Fren Balatası',
+            manufacturer: 'Ferodo',
+            compatibleModels: 'Megane IV, Clio V, Talisman, Kadjar',
+            defaultPrice: 1250,
+            stock: 18,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '45 Dk'
+          },
+          {
+            name: 'Fiat Egea Ön Fren Balata Takımı',
             oeNumber: '77366536',
             vehicleBrand: 'Fiat',
             category: 'Fren Sistemi',
             partGroup: 'Fren Sistemi',
+            subCategory: 'Ön Fren Balatası',
+            manufacturer: 'Bosch',
             compatibleModels: 'Fiat Egea 1.3 / 1.6 Multijet, 500L',
             defaultPrice: 1100,
-            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'
+            stock: 30,
+            imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '40 Dk'
           },
           {
-            name: 'Triger Kayış & Rulman Seti',
+            name: 'Ford Focus Triger Kayış & Rulman Seti',
             oeNumber: '1872496',
             vehicleBrand: 'Ford',
             category: 'Motor Parçaları',
-            partGroup: 'Motor & Mekanik',
+            partGroup: 'Motor & Şanzıman',
+            subCategory: 'Motor & Şanzıman',
+            manufacturer: 'Continental',
             compatibleModels: 'Ford Focus 1.5 TDCi, C-Max, Kuga',
             defaultPrice: 2950,
-            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80'
+            stock: 15,
+            imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400&auto=format&fit=crop&q=80',
+            estimatedLaborTime: '2 Saat'
           }
         ];
 
@@ -1809,7 +1942,10 @@
             partGroup: seed.partGroup,
             imageUrl: seed.imageUrl,
             images: [seed.imageUrl],
-            stock: 25,
+            stock: seed.stock || 25,
+            subCategory: seed.subCategory || '',
+            manufacturer: seed.manufacturer || '',
+            estimatedLaborTime: seed.estimatedLaborTime || lr.estimatedLaborTime,
             isDiscounted: discountRate > 0,
             defaultPrice: listP,
             customPrice: listP,
@@ -1875,6 +2011,38 @@
             (detectedBrand && (p.compatibleModels || '').toLowerCase().includes(detectedBrand))
           );
         }
+      }
+
+      if (categoryFilter && categoryFilter !== 'all') {
+        calculated = calculated.filter(p => 
+          (p.category || '').toLowerCase().includes(categoryFilter) ||
+          (p.partGroup || '').toLowerCase().includes(categoryFilter)
+        );
+      }
+
+      if (subCatFilter && subCatFilter !== 'all') {
+        calculated = calculated.filter(p => 
+          (p.subCategory || '').toLowerCase().includes(subCatFilter) ||
+          (p.name || '').toLowerCase().includes(subCatFilter)
+        );
+      }
+
+      if (mfrFilter && mfrFilter !== 'all') {
+        calculated = calculated.filter(p => 
+          (p.manufacturer || '').toLowerCase().includes(mfrFilter)
+        );
+      }
+
+      if (inStockFilter) {
+        calculated = calculated.filter(p => (p.stock || 0) > 0);
+      }
+
+      if (minPriceFilter > 0) {
+        calculated = calculated.filter(p => (p.discountedPrice || p.defaultPrice || 0) >= minPriceFilter);
+      }
+
+      if (maxPriceFilter > 0) {
+        calculated = calculated.filter(p => (p.discountedPrice || p.defaultPrice || 0) <= maxPriceFilter);
       }
 
       const currentBal = firstCust && firstCust.balance !== undefined ? firstCust.balance : 14850.00;
