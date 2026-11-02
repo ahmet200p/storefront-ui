@@ -2020,11 +2020,20 @@
         }
       }
 
-      if (categoryFilter && categoryFilter !== 'all') {
-        calculated = calculated.filter(p => 
-          (p.category || '').toLowerCase().includes(categoryFilter) ||
-          (p.partGroup || '').toLowerCase().includes(categoryFilter)
-        );
+      if (categoryFilter && categoryFilter !== 'all' && categoryFilter !== 'tüm kategoriler') {
+        calculated = calculated.filter(p => {
+          const cat = (p.category || '').toLowerCase();
+          const part = (p.partGroup || '').toLowerCase();
+          const name = (p.name || '').toLowerCase();
+          if (categoryFilter.includes('fren')) {
+            return cat.includes('fren') || part.includes('fren') || name.includes('fren') || name.includes('balata') || name.includes('disk');
+          }
+          if (categoryFilter.includes('motor') || categoryFilter.includes('şanzıman') || categoryFilter.includes('sanziman')) {
+            if (name.includes('balata') || name.includes('fren') || name.includes('disk')) return false;
+            return cat.includes('motor') || part.includes('motor') || name.includes('motor');
+          }
+          return cat.includes(categoryFilter) || part.includes(categoryFilter) || name.includes(categoryFilter);
+        });
       }
 
       if (subCatFilter && subCatFilter !== 'all') {

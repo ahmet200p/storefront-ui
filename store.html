@@ -232,7 +232,7 @@
     <div class="max-w-7xl mx-auto px-4 flex items-center gap-1 sm:gap-2 overflow-x-auto py-1 scrollbar-none">
       
       <!-- Tüm Kategoriler Mega Button -->
-      <button type="button" onclick="toggleMegaMenu(event)" id="btn-mega-menu"
+      <button type="button" onclick="toggleMegaMenu(event)" id="btn-mega-menu" data-category="Tüm Kategoriler"
         class="bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs px-3.5 py-2 rounded-lg flex items-center gap-2 shadow-md shrink-0 cursor-pointer transition-all active:scale-95"
         aria-haspopup="true" aria-expanded="false" aria-controls="mega-menu-dropdown">
         <span class="text-sm">☰</span>
@@ -241,15 +241,15 @@
       </button>
 
       <!-- Category Links -->
-      <div class="flex items-center gap-1 overflow-x-auto py-1 shrink-0">
-        <button type="button" onclick="filterByCategory('Motor & Şanzıman', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Motor & Şanzıman</button>
-        <button type="button" onclick="filterByCategory('Fren Sistemi', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg bg-slate-800 text-orange-400 font-extrabold border-b-2 border-orange-500 transition-colors shrink-0 active-cat">Fren Sistemi</button>
-        <button type="button" onclick="filterByCategory('Süspansiyon & Direksiyon', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Süspansiyon & Direksiyon</button>
-        <button type="button" onclick="filterByCategory('Filtre & Bakım', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Filtre & Bakım</button>
-        <button type="button" onclick="filterByCategory('Elektrik & Aydınlatma', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Elektrik & Aydınlatma</button>
-        <button type="button" onclick="filterByCategory('Kaporta & Karoseri', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Kaporta & Karoseri</button>
-        <button type="button" onclick="filterByCategory('Egzoz & Emisyon', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Egzoz & Emisyon</button>
-        <button type="button" onclick="filterByCategory('FIRSAT', this)" class="nav-cat-btn px-3 py-1.5 rounded-lg text-rose-400 hover:bg-slate-800 font-extrabold transition-colors shrink-0">🔥 Fırsat Ürünleri</button>
+      <div class="flex items-center gap-1 overflow-x-auto py-1 shrink-0" id="navbar-category-links">
+        <button type="button" data-category="Motor & Şanzıman" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Motor & Şanzıman</button>
+        <button type="button" data-category="Fren Sistemi" class="nav-cat-btn px-3 py-1.5 rounded-lg bg-slate-800 text-orange-400 font-extrabold border-b-2 border-orange-500 transition-colors shrink-0 active-cat">Fren Sistemi</button>
+        <button type="button" data-category="Süspansiyon & Direksiyon" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Süspansiyon & Direksiyon</button>
+        <button type="button" data-category="Filtre & Bakım" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Filtre & Bakım</button>
+        <button type="button" data-category="Elektrik & Aydınlatma" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Elektrik & Aydınlatma</button>
+        <button type="button" data-category="Kaporta & Karoseri" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Kaporta & Karoseri</button>
+        <button type="button" data-category="Egzoz & Emisyon" class="nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0">Egzoz & Emisyon</button>
+        <button type="button" data-category="FIRSAT" class="nav-cat-btn px-3 py-1.5 rounded-lg text-rose-400 hover:bg-slate-800 font-extrabold transition-colors shrink-0">🔥 Fırsat Ürünleri</button>
         <button type="button" onclick="openVehicleSelectorModal()" class="nav-cat-btn px-3 py-1.5 rounded-lg text-amber-300 hover:bg-slate-800 font-extrabold transition-colors shrink-0 flex items-center gap-1">🚗 Garajım Seçimi</button>
       </div>
 
@@ -1137,15 +1137,24 @@
       loadFavoritesFromStorage();
       checkAuthState();
       initSidebarListeners();
+      initNavbarCategoryListeners();
       buildAndFetchFilters();
       updateFilterFacetCounts([]);
       await fetchProducts();
     });
 
     // ==========================================================================
-    // 1. ÜRÜN ÇEKME & FRONTEND VERİ EŞLEŞTİRMESİ (prompt.md ADIM 1)
+    // 1. ÜRÜN ÇEKME & FRONTEND VERİ EŞLEŞTİRMESİ (prompt.md ADIM 1 & ADIM 2)
     // ==========================================================================
-    async function fetchProducts() {
+    async function fetchProducts(category) {
+      // ADIM 2: Dışarıdan category parametresi alacak şekilde dinamik yönetim
+      // Parametresiz çağrıldığında (veya 'Tüm Kategoriler' seçildiğinde) filtreyi sıfırla
+      if (!category || category === 'Tüm Kategoriler' || category === 'all') {
+        currentCategory = '';
+      } else {
+        currentCategory = category.trim();
+      }
+
       const grid = document.getElementById('products-grid');
       const emptyState = document.getElementById('empty-catalog-state');
 
@@ -1154,7 +1163,7 @@
         if (activeVehicle && activeVehicle.brand && activeVehicle.brand !== 'all') {
           queryParams.set('brand', activeVehicle.brand);
         }
-        if (currentCategory && currentCategory !== 'all') {
+        if (currentCategory && currentCategory !== 'all' && currentCategory !== 'Tüm Kategoriler') {
           queryParams.set('category', currentCategory);
         }
         if (currentSearchQuery) {
@@ -1170,11 +1179,15 @@
           queryParams.set('maxPrice', String(currentMaxPrice));
         }
 
+        const queryString = queryParams.toString();
+        const requestPath = '/store/products' + (queryString ? '?' + queryString : '');
+        const fullUrl = `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api${requestPath}`;
+
         let data = null;
         if (typeof apiFetch === 'function') {
-          data = await apiFetch('/store/products?' + queryParams.toString());
+          data = await apiFetch(requestPath);
         } else {
-          const rawRes = await fetch('https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products?' + queryParams.toString());
+          const rawRes = await fetch(fullUrl);
           data = await rawRes.json();
         }
 
@@ -1194,23 +1207,6 @@
           rawList = data.products;
         } else if (data && Array.isArray(data.items)) {
           rawList = data.items;
-        }
-
-        // Eğer belirli kategori veya marka filtresi sonucu 0 ürün geldiyse (farklı marka/kategori bayi ürünleri varsa),
-        // vitrinin boş kalmaması için tüm ürünleri koşulsuz getir:
-        if (rawList.length === 0 && (queryParams.has('brand') || queryParams.has('category'))) {
-          console.info("[Vitrin] Filtreli aramada sonuç bulunamadı. Bayi ürünleri için koşulsuz katalog sorgulanıyor...");
-          let fallbackData = null;
-          if (typeof apiFetch === 'function') {
-            fallbackData = await apiFetch('/store/products');
-          } else {
-            const rawRes = await fetch('https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api/store/products');
-            fallbackData = await rawRes.json();
-          }
-          console.log("Gelen Veri (Koşulsuz Liste):", fallbackData);
-          if (Array.isArray(fallbackData)) rawList = fallbackData;
-          else if (fallbackData && Array.isArray(fallbackData.data)) rawList = fallbackData.data;
-          else if (fallbackData && fallbackData.data && Array.isArray(fallbackData.data.data)) rawList = fallbackData.data.data;
         }
 
         // prompt.md ADIM 1: HTML şablonu ve Prisma sütun isimleriyle (name, price, oeNumber, vehicleBrand, stock)
@@ -1332,6 +1328,46 @@
         });
         sidebar.addEventListener('input', function() {
           buildAndFetchFilters();
+        });
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // FRONTEND ÜST MENÜ (NAVBAR) OLAY DİNLEYİCİLERİ (prompt.md ADIM 1)
+    // --------------------------------------------------------------------------
+    function initNavbarCategoryListeners() {
+      const catButtons = document.querySelectorAll('.nav-cat-btn[data-category]');
+      catButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const category = this.getAttribute('data-category');
+
+          // 1. Eski aktif sekmeden CSS class'larını kaldır, tıklanan sekmeye ekle
+          document.querySelectorAll('.nav-cat-btn').forEach(b => {
+            b.classList.remove('bg-slate-800', 'text-orange-400', 'font-extrabold', 'border-b-2', 'border-orange-500', 'active-cat');
+            b.classList.add('hover:bg-slate-800', 'hover:text-white');
+          });
+          this.classList.remove('hover:bg-slate-800', 'hover:text-white');
+          this.classList.add('bg-slate-800', 'text-orange-400', 'font-extrabold', 'border-b-2', 'border-orange-500', 'active-cat');
+
+          // 2 & 3. Tıklanan sekmenin data-category değerini al ve fetchProducts(category) çağır
+          if (category === 'FIRSAT') {
+            fetchProducts('all');
+          } else {
+            fetchProducts(category);
+          }
+        });
+      });
+
+      // 4. "Tüm Kategoriler" butonu
+      const allCategoriesBtn = document.getElementById('btn-mega-menu');
+      if (allCategoriesBtn) {
+        allCategoriesBtn.addEventListener('click', function(e) {
+          document.querySelectorAll('.nav-cat-btn').forEach(b => {
+            b.classList.remove('bg-slate-800', 'text-orange-400', 'font-extrabold', 'border-b-2', 'border-orange-500', 'active-cat');
+            b.classList.add('hover:bg-slate-800', 'hover:text-white');
+          });
+          fetchProducts(); // Parametresiz çağır (filtreyi sıfırla)
         });
       }
     }
@@ -1491,6 +1527,28 @@
       buildAndFetchFilters();
 
       let filtered = [...allProducts];
+
+      // Üst Kategori (Navbar) filtresi
+      if (currentCategory && currentCategory !== 'all' && currentCategory !== 'Tüm Kategoriler') {
+        const catLower = currentCategory.toLowerCase().trim();
+        filtered = filtered.filter(p => {
+          const pCat = (p.category || '').toLowerCase().trim();
+          const pSub = (p.subCategory || '').toLowerCase().trim();
+          const pPart = (p.partGroup || '').toLowerCase().trim();
+          const pName = (p.name || '').toLowerCase().trim();
+
+          if (catLower.includes('fren')) {
+            return pCat.includes('fren') || pSub.includes('fren') || pPart.includes('fren') || pName.includes('fren') || pName.includes('balata') || pName.includes('disk');
+          }
+          if (catLower.includes('motor') || catLower.includes('şanzıman') || catLower.includes('sanziman')) {
+            if (pName.includes('fren') || pName.includes('balata') || pName.includes('disk') || pSub.includes('fren')) {
+              return false;
+            }
+            return pCat.includes('motor') || pCat.includes('şanzıman') || pPart.includes('motor') || pName.includes('motor');
+          }
+          return pCat.includes(catLower) || pSub.includes(catLower) || pPart.includes(catLower) || pName.includes(catLower);
+        });
+      }
 
       // Marka / Model filtresi
       if (currentBrand && currentBrand !== 'all') {
@@ -1840,14 +1898,21 @@
     }
 
     function filterByCategory(catName, btn) {
-      currentCategory = (catName === 'FIRSAT') ? 'all' : catName;
       document.querySelectorAll('.nav-cat-btn').forEach(b => {
-        b.className = 'nav-cat-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors shrink-0';
+        b.classList.remove('bg-slate-800', 'text-orange-400', 'font-extrabold', 'border-b-2', 'border-orange-500', 'active-cat');
+        b.classList.add('hover:bg-slate-800', 'hover:text-white');
       });
       if (btn) {
-        btn.className = 'nav-cat-btn px-3 py-1.5 rounded-lg bg-slate-800 text-orange-400 font-extrabold border-b-2 border-orange-500 transition-colors shrink-0 active-cat';
+        btn.classList.remove('hover:bg-slate-800', 'hover:text-white');
+        btn.classList.add('bg-slate-800', 'text-orange-400', 'font-extrabold', 'border-b-2', 'border-orange-500', 'active-cat');
       }
-      loadProducts();
+      if (!catName || catName === 'Tüm Kategoriler' || catName === 'all') {
+        fetchProducts();
+      } else if (catName === 'FIRSAT') {
+        fetchProducts('all');
+      } else {
+        fetchProducts(catName);
+      }
     }
 
     function filterBySubCategory(subCat) {

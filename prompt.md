@@ -1,35 +1,26 @@
-# KRİTİK GÖREV: Filtreleme Eşleşmesi ve Yanlış Sayaç (Facet Count) Sorununun Çözümü
+# KRİTİK GÖREV: Üst Kategori Menüsünün (Navbar) Backend Filtrelemesine Bağlanması
 
 **HATA TESPİTİ:**
-1. **Yanlış Sayım (Facet Count):** API'den tek bir ürün (Renault/OEM) dönmesine rağmen, sol menüdeki JS sayım algoritması hata yaparak Bosch, Ferodo, TRW, Brembo gibi alakasız checkbox'ların yanına `(1)` yazdırıyor.
-2. **Kırık Filtreleme:** Yanında `(1)` yazan "Ön Fren Balatası" kategorisine tıklandığında ürün ekrandan kayboluyor ("Ürün bulunamadı" hatası). Bu durum, Frontend'in filtreleme yaparken kullandığı `value` ile Backend'den dönen veri (`product.category`) arasında kesin eşleşme (strict match) olmadığını gösteriyor.
+Kullanıcı üst menüden "Motor & Şanzıman" gibi bir kategori seçtiğinde, sekme "Aktif" (turuncu çizgili) görünmesine rağmen sayfadaki ürün listesi yenilenmiyor ve alakasız (Fren sistemine ait) ürünler ekranda kalmaya devam ediyor. Üst menü (Navbar) şu an API'yi tetiklemiyor.
 
-Lütfen `store.html` ve JS dosyasında şu 3 adımı DERHAL uygula:
+Lütfen `store.html`, ilgili JS dosyası ve Backend Controller tarafında şu 3 adımı DERHAL uygula:
 
-### ADIM 1: CHECKBOX "VALUE" DEĞERLERİNİ VERİTABANIYLA EŞİTLE
-- Sol menüdeki tüm checkbox'ları (`<input type="checkbox">`) kontrol et.
-- Bunların `value` attribute'ları, API'den dönen ürün objesindeki isimlerle BİREBİR aynı olmalıdır.
-  *(Örnek: Veritabanında kategori "Ön Fren Balatası" olarak geçiyorsa, checkbox da kesinlikle `<input type="checkbox" value="Ön Fren Balatası">` olmalıdır. Başındaki/sonundaki boşlukları (trim) kontrol et.)*
+### ADIM 1: FRONTEND ÜST MENÜ (NAVBAR) OLAY DİNLEYİCİLERİ
+- Üst menüdeki kategori linklerini (`Motor & Şanzıman`, `Fren Sistemi` vb.) HTML tarafında bul ve bunlara birer `data-category` niteliği (attribute) ekle. (Örn: `data-category="Motor & Şanzıman"`).
+- JS dosyasında bu menü öğelerine `click` event listener ekle.
+- Tıklanıldığında:
+  1. Eski aktif sekmeden CSS class'larını (turuncu alt çizgi vb.) kaldır, tıklanan sekmeye ekle.
+  2. Tıklanan sekmenin `data-category` değerini al.
+  3. `fetchProducts(category)` fonksiyonunu bu değerle yeniden çağır (sayfayı yenilemeden).
+  4. Eğer "Tüm Kategoriler" butonuna basılırsa `fetchProducts()` fonksiyonunu parametresiz çağır (filtreyi sıfırla).
 
-### ADIM 2: YANLIŞ SAYIM (FACET COUNT) ALGORİTMASINI DÜZELT
-- Ürünler geldiğinde sol menüdeki sayıları hesaplayan JS fonksiyonunu bul.
-- Sayım algoritması tüm checkbox'lara rastgele `1` eklememelidir. Sadece gelen ürünün kendi markasına ve kategorisine 1 eklemelidir.
-- **Doğru Mantık:**
+### ADIM 2: JAVASCRIPT FETCH FONKSİYONUNUN (QUERY STRING) GÜNCELLENMESİ
+- `fetchProducts` (veya `loadProducts`) fonksiyonunu, dışarıdan `category` parametresi alacak şekilde düzenle.
+- API'ye atılan `fetch` URL'sini dinamik hale getir:
   ```javascript
-  const brandCounts = {};
-  const categoryCounts = {};
-  
-  products.forEach(product => {
-      // Veritabanından gelen tam string değerine göre say
-      brandCounts[product.brand] = (brandCounts[product.brand] || 0) + 1;
-      categoryCounts[product.category] = (categoryCounts[product.category] || 0) + 1;
-  });
-  
-  // Sonra sadece ilgili data-filter etiketlerine bu sayıları bas, olmayanlara (0) bas.
-
-  ADIM 3: FİLTRELEME (CLICK) AKSİYONUNU DÜZELT
-Checkbox'a tıklandığında Backend'e (veya Frontend filtreleme fonksiyonuna) giden değeri logla: console.log("Filtrelenen Kategori:", secilenKategori);
-
-Filtreleme işleminin büyük/küçük harf duyarlılığı (case sensitivity) yüzünden patlamaması için, karşılaştırma yaparken her iki tarafı da .toLowerCase().trim() ile normalize et veya Prisma tarafında eşleşmenin sorunsuz yapıldığından emin ol.
-
-EMİR: Filtre tıklandığında ürünün yok olması veri uyumsuzluğundandır. Checkbox value değerlerini gerçek veritabanı verileriyle birebir eşleştir ve rastgele (1) yazan sayım döngüsünü kesin (strict) karşılaştırma yapacak şekilde düzelt.
+  let url = `${API_BASE_URL}/store/products`;
+  if (category && category !== 'Tüm Kategoriler') {
+      url += `?category=${encodeURIComponent(category)}`;
+  }
+  // Mevcut sol menü filtreleri varsa onları da URL'ye & ile eklemeyi unutma.
+  fetch(url) ...
