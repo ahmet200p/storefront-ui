@@ -1,20 +1,23 @@
-# GÖREV: Vitrin UI Statik Alanların Temizlenmesi ve Dinamik Başlık Kurgusu
+# GÖREV: Sol Menü Filtre Sayılarının (Facet Counts) Dinamik Veriye Bağlanması
 
-**GÖREV BİLDİRİMİ:**
-`store.html` sayfasındaki üst başlık alanı ve sol menüdeki araç seçim kutusu statik (hardcoded) verilerle dolu. Tasarımı sadeleştirmek ve başlıkları kullanıcının filtrelerine göre dinamik hale getirmek için HTML ve JS dosyalarında şu 3 adımı DERHAL uygula:
+**DURUM:** `store.html` sayfasındaki sol filtre panelinde ("Alt Kategori", "Parça Üreticisi" vb.) yer alan ürün adetleri tamamen statik (hardcoded) sayılardan oluşuyor (Örn: 14, 24, 32). Sistemdeki canlı verilere göre bu sayıların otomatik hesaplanması ve olmayanlar için (0) yazması gerekmektedir.
 
-### ADIM 1: "SEÇİLİ ARAÇ" KUTUSUNU TAMAMEN SİL
-- Sol menünün (Sidebar) en üstünde yer alan, içinde "Volkswagen Golf VII" yazan ve "Farklı Araç Seç" butonu barındıran **"SEÇİLİ ARAÇ"** kapsayıcı kutusunu (div) HTML'den TAMAMEN SİL. (Bu alan şimdilik boş kalacak, ileride yeniden kurgulanacak).
+Lütfen HTML ve JS dosyalarında şu 3 adımı DERHAL uygula:
 
-### ADIM 2: ANA BAŞLIĞI DİNAMİKLEŞTİR VE GİZLE
-- Sayfanın üst kısmındaki `<h1>` (veya `<h2>`) etiketli **"Volkswagen Golf VII Uyumlu Tüm Yedek Parçalar"** yazan başlığa bir ID ver (Örn: `dynamic-page-title`).
-- Bu başlığı sayfa ilk yüklendiğinde varsayılan olarak GİZLİ (`hidden` veya `display: none`) yap.
-- JS dosyasındaki `buildAndFetchFilters()` (veya filtreleri dinleyen) fonksiyonun içine şu mantığı ekle: Eğer kullanıcı Marka/Model filtrelerinden birini seçerse (Örn: Hyundai), başlığın gizliliğini kaldır ve içindeki metni `${secilenMarka} Uyumlu Tüm Yedek Parçalar` olarak dinamik şekilde güncelle. Hiçbir marka/araç seçili değilse başlık gizli kalmaya devam etsin.
+### ADIM 1: HTML'DEKİ STATİK SAYILARI TEMİZLEME VE DATA ETİKETİ EKLEME
+- Sol menüdeki checkbox'ların yanındaki `(14)`, `(24)` gibi sahte sayıların hepsini sil.
+- Bunların yerine JS'nin kolayca yakalayabilmesi için özel `data-*` attribute'larına sahip `span` etiketleri yerleştir. İçlerini varsayılan olarak `(0)` yap.
+  *Örnek Marka:* `<span data-filter-count="brand-Bosch">(0)</span>`
+  *Örnek Kategori:* `<span data-filter-count="category-Ön Fren Balatası">(0)</span>`
 
-### ADIM 3: "3 ARAMA KRİTERİ" YAZISINI DİNAMİK SAYACA BAĞLA
-- Ana başlığın altındaki **"(3 arama kriteri devrede ve B2B toptancı iskonto şartı aktif)"** yazısını kapsayan `span` veya `p` etiketine bir ID ver (Örn: `dynamic-criteria-text`).
-- Sayfa ilk açıldığında bu yazıyı GİZLİ (`hidden`) yap veya içini boşalt.
-- JS tarafında: Kullanıcının sol menüden seçtiği aktif filtre (checkbox) sayısını hesapla.
-- Eğer aktif filtre sayısı 0'dan büyükse: Yazıyı görünür yap ve içine `(${aktifFiltreSayisi} arama kriteri devrede)` yazdır. Eğer filtre sıfırlanırsa (0 olursa) bu yazıyı tekrar gizle.
+### ADIM 2: JAVASCRIPT İLE GELEN VERİLERİ (ARRAY) SAYMA
+- API'den ürünlerin başarıyla çekildiği `fetchProducts` (veya veriyi ekrana basan) fonksiyonunu bul.
+- Gelen ürün dizisini (`data.data` veya `data`) bir döngüye (`forEach` veya `reduce`) sokarak, hangi "markadan" ve hangi "kategoriden" kaçar adet ürün olduğunu hesaplayan bir algoritma yaz.
+- *Örnek Mantık:* `counts['brand-Bosch'] = (counts['brand-Bosch'] || 0) + 1;`
 
-**EMİR:** Söylenen yerlerdeki statik yazıları (Volkswagen vs.) HTML'den temizle. Başlık ve kriter yazısını sadece filtre seçildiğinde JS ile doldurup görünür hale getirecek mantığı kur.
+### ADIM 3: EKRANDAKİ (DOM) SAYILARI GÜNCELLEME
+- Sayım işlemi tamamlandıktan sonra, HTML'deki ilgili `span` etiketlerini bularak `.textContent` özelliklerini güncelle.
+- *Örnek:* `document.querySelector('[data-filter-count="brand-Bosch"]').textContent = '(' + (counts['brand-Bosch'] || 0) + ')';`
+- Eğer bir kategoride hiç ürün yoksa, o değer `(0)` olarak görünmeye devam etsin (veya istersen checkbox'ı `disabled` yapacak kodu da ekleyebilirsin).
+
+**EMİR:** HTML içindeki el yazısı (hardcoded) sayıları tamamen yok et. Frontend, Render API'den gelen güncel ürün dizisini (Array) tarasın ve sidebar'daki rakamları bu gerçek sonuca göre kendi hesaplasın.
