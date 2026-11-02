@@ -1,23 +1,16 @@
-# GÖREV: Sol Menü Filtre Sayılarının (Facet Counts) Dinamik Veriye Bağlanması
+# GÖREV: Vitrindeki Statik "Bakım Kiti / Önerilen Ürünler" Alanının Temizlenmesi
 
-**DURUM:** `store.html` sayfasındaki sol filtre panelinde ("Alt Kategori", "Parça Üreticisi" vb.) yer alan ürün adetleri tamamen statik (hardcoded) sayılardan oluşuyor (Örn: 14, 24, 32). Sistemdeki canlı verilere göre bu sayıların otomatik hesaplanması ve olmayanlar için (0) yazması gerekmektedir.
+**DURUM:** `store.html` sayfasında (ürün kartlarının veya sepet/modal alanının altında) yer alan "BU PARÇAYI ALANLAR ŞUNLARI DA ALDI (BAKIM KİTİ)" başlığı ve altındaki ürünler (Castrol DOT 4, Würth Sprey vb.) tasarımda statik (hardcoded) olarak kalmıştır. Veritabanında bu ürünler bulunmamaktadır, bu da gerçek dışı bir görüntü yaratmaktadır.
 
-Lütfen HTML ve JS dosyalarında şu 3 adımı DERHAL uygula:
+Lütfen HTML dosyasında şu temizliği DERHAL uygula:
 
-### ADIM 1: HTML'DEKİ STATİK SAYILARI TEMİZLEME VE DATA ETİKETİ EKLEME
-- Sol menüdeki checkbox'ların yanındaki `(14)`, `(24)` gibi sahte sayıların hepsini sil.
-- Bunların yerine JS'nin kolayca yakalayabilmesi için özel `data-*` attribute'larına sahip `span` etiketleri yerleştir. İçlerini varsayılan olarak `(0)` yap.
-  *Örnek Marka:* `<span data-filter-count="brand-Bosch">(0)</span>`
-  *Örnek Kategori:* `<span data-filter-count="category-Ön Fren Balatası">(0)</span>`
+### ADIM 1: SAHTE ÇAPRAZ SATIŞ (CROSS-SELL) BLOĞUNU TAMAMEN SİL
+- `store.html` veya ilgili JavaScript şablonu (template literal) içerisinde `BU PARÇAYI ALANLAR ŞUNLARI DA ALDI` metnini arat.
+- Bu başlığı ve içindeki sahte (fake) ürün kartlarını kapsayan ana `<div...>` veya `<section...>` bloğunu koddan TAMAMEN SİL. 
+- Eğer ileride bu yapıyı dinamik kurmak istersen diye kodu silmek yerine tamamen HTML yorum satırına (`<!-- ... -->`) da alabilirsin, ancak ekranda KESİNLİKLE görünmemelidir.
 
-### ADIM 2: JAVASCRIPT İLE GELEN VERİLERİ (ARRAY) SAYMA
-- API'den ürünlerin başarıyla çekildiği `fetchProducts` (veya veriyi ekrana basan) fonksiyonunu bul.
-- Gelen ürün dizisini (`data.data` veya `data`) bir döngüye (`forEach` veya `reduce`) sokarak, hangi "markadan" ve hangi "kategoriden" kaçar adet ürün olduğunu hesaplayan bir algoritma yaz.
-- *Örnek Mantık:* `counts['brand-Bosch'] = (counts['brand-Bosch'] || 0) + 1;`
+### ADIM 2: VERİ TUTARLILIĞI KONTROLÜ
+- Sayfada sadece API'den (`GET /api/store/products`) gelen gerçek ürünler `map` veya `forEach` ile ekrana basılmalıdır.
+- Kodun içinde unutulmuş başka sahte (statik) ürün kartı kalıntısı varsa, onları da tespit edip temizle.
 
-### ADIM 3: EKRANDAKİ (DOM) SAYILARI GÜNCELLEME
-- Sayım işlemi tamamlandıktan sonra, HTML'deki ilgili `span` etiketlerini bularak `.textContent` özelliklerini güncelle.
-- *Örnek:* `document.querySelector('[data-filter-count="brand-Bosch"]').textContent = '(' + (counts['brand-Bosch'] || 0) + ')';`
-- Eğer bir kategoride hiç ürün yoksa, o değer `(0)` olarak görünmeye devam etsin (veya istersen checkbox'ı `disabled` yapacak kodu da ekleyebilirsin).
-
-**EMİR:** HTML içindeki el yazısı (hardcoded) sayıları tamamen yok et. Frontend, Render API'den gelen güncel ürün dizisini (Array) tarasın ve sidebar'daki rakamları bu gerçek sonuca göre kendi hesaplasın.
+**EMİR:** B2B platformunda sadece bayinin API aracılığıyla sisteme kaydettiği gerçek stoklar görünmelidir. Gömülü (hardcoded) gelen tüm sahte ürün önerilerini ve "bakım kiti" bloklarını arayüzden kaldır.

@@ -721,9 +721,6 @@
           </div>
         </div>
 
-        <!-- Çapraz Satış: "Bu parçayı alanlar şunları da aldı (Bakım Kiti)" -->
-        <section id="page-recommended-kit-section" class="hidden"></section>
-
       </section>
 
     </div>
@@ -1033,14 +1030,6 @@
             </button>
           </div>
         </div>
-      </div>
-
-      <!-- Bakım Kiti / Birlikte Al Alanı -->
-      <div class="mt-6 pt-4 border-t border-slate-200" id="detail-kit-section">
-        <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <span>💡</span> Bu parçayı alanlar şunları da aldı (Bakım Kiti)
-        </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="detail-kit-carousel"></div>
       </div>
     </div>
   </div>
@@ -2199,7 +2188,7 @@
     }
 
     // --------------------------------------------------------------------------
-    // 7. PRODUCT DETAIL MODAL & CROSS-SELL
+    // 7. PRODUCT DETAIL MODAL
     // --------------------------------------------------------------------------
     function openProductDetailModal(id) {
       const prod = displayedProducts.find(p => (p.tenantProductId === id || p.productId === id || p.id === id));
@@ -2232,9 +2221,6 @@
         };
       }
 
-      // Render Kit items
-      renderDetailKitItems(prod);
-
       const modal = document.getElementById('modal-product-detail');
       const backdrop = document.getElementById('modal-detail-backdrop');
       if (modal) modal.classList.remove('hidden');
@@ -2246,42 +2232,6 @@
       const backdrop = document.getElementById('modal-detail-backdrop');
       if (modal) modal.classList.add('hidden');
       if (backdrop) backdrop.classList.add('hidden');
-    }
-
-    function renderDetailKitItems(mainProd) {
-      const container = document.getElementById('detail-kit-carousel');
-      if (!container) return;
-
-      const kits = [
-        {
-          name: 'DOT 4 Sentetik Yüksek Isı Fren Hidrolik Yağı (1L)',
-          oe: 'VAG-B000750M3',
-          brand: 'Castrol / VAG',
-          price: 280,
-          img: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&auto=format&fit=crop&q=80'
-        },
-        {
-          name: 'Fren Balata Temizleme Spreyi (500ml)',
-          oe: 'WURTH-08901087',
-          brand: 'Würth',
-          price: 150,
-          img: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&auto=format&fit=crop&q=80'
-        }
-      ];
-
-      container.innerHTML = kits.map((k, i) => `
-        <div class="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-          <img src="${k.img}" alt="${k.name}" class="w-10 h-10 object-contain bg-white rounded-lg p-1 border border-slate-200 shrink-0">
-          <div class="flex-1 min-w-0">
-            <h5 class="text-[11px] font-bold text-slate-900 truncate">${k.name}</h5>
-            <div class="text-[10px] text-slate-500 font-mono">${k.oe} • ${k.brand}</div>
-            <div class="text-xs font-mono font-bold text-orange-600 mt-0.5">₺${k.price.toFixed(2)}</div>
-          </div>
-          <button type="button" onclick="addToCart('kit-${i}', '${k.oe}', '${k.name}', ${k.price}, ${k.price}, 50, '${k.img}')" class="px-2.5 py-1.5 bg-slate-900 hover:bg-orange-600 text-white font-bold text-[10px] rounded-lg cursor-pointer">
-            + Ekle
-          </button>
-        </div>
-      `).join('');
     }
 
     // --------------------------------------------------------------------------
