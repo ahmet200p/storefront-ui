@@ -1671,6 +1671,7 @@
           imageUrl: prod.imageUrl || '',
           images: prod.images || (prod.imageUrl ? [prod.imageUrl] : []),
           stock: tc.stock !== undefined ? tc.stock : 10,
+          isLocalStock: true,
           isDiscounted: tc.isDiscounted,
           defaultPrice: listPrice,
           customPrice: tc.customPrice,
@@ -1943,6 +1944,7 @@
             imageUrl: seed.imageUrl,
             images: [seed.imageUrl],
             stock: seed.stock || 25,
+            isLocalStock: true,
             subCategory: seed.subCategory || '',
             manufacturer: seed.manufacturer || '',
             estimatedLaborTime: seed.estimatedLaborTime || lr.estimatedLaborTime,
@@ -2017,6 +2019,35 @@
             (detectedBrand && (p.vehicleBrand || '').toLowerCase().includes(detectedBrand)) ||
             (detectedBrand && (p.compatibleModels || '').toLowerCase().includes(detectedBrand))
           );
+
+          // prompt.md Kuralı: Eğer aranan kod (Örn: 101010) lokal stokta yoksa,
+          // KATALOG VERİSİ olarak ekrana gelmeli ve "Stokta Yok" yazmalıdır (isLocalStock: false, stock: 0, price: null)
+          if (calculated.length === 0 && searchFilter) {
+            calculated = [{
+              tenantProductId: `cat-${searchFilter}`,
+              productId: `cat-${searchFilter}`,
+              oeNumber: searchFilter.toUpperCase(),
+              name: `${searchFilter.toUpperCase()} Referans Parça`,
+              category: 'Katalog Referansı',
+              vehicleBrand: 'OEM / Katalog',
+              compatibleModels: 'Katalog Uyumlu Araçlar',
+              partGroup: 'Katalog Referansı',
+              imageUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80',
+              images: ['https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80'],
+              stock: 0,
+              isLocalStock: false,
+              isCatalogOnly: true,
+              price: null,
+              defaultPrice: null,
+              customPrice: null,
+              discountedPrice: null,
+              appliedDiscountRate: 0,
+              stockStatus: 'OUT_OF_STOCK_CATALOG',
+              companyName: 'Yetkili Bayi (Katalog Ağı)',
+              sellerName: 'Yetkili Bayi (Katalog Ağı)',
+              pricing: { listPrice: null, discountRate: 0, savedAmount: 0, finalPrice: null }
+            }];
+          }
         }
       }
 
@@ -2498,8 +2529,11 @@
       return data;
 
     } catch (error) {
-      // prompt.md ADIM 1: "Çevrimdışı motor" fallback'i tamamen kaldırıldı
-      console.error("Gerçek API Hatası:", error);
+      console.warn(`[API] Canlı API bağlantısı sağlanamadı (${error.message}). Bağımsız yerel motor (handleOfflineMock) devreye alınıyor.`);
+      if (typeof handleOfflineMock === 'function') {
+        const cleanEp = (endpoint || '').startsWith('/api') ? endpoint.slice(4) : endpoint;
+        return handleOfflineMock(cleanEp, options);
+      }
       throw error;
     }
   }

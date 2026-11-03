@@ -1644,12 +1644,18 @@
           const partGroup = (p.partGroup || prod.partGroup || category).trim();
           const compatibleModels = p.compatibleModels || prod.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
           const labor = p.estimatedLaborTime || prod.estimatedLaborTime || '45 Dk';
-          const price = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (prod.defaultPrice || p.defaultPrice || 1450)));
-          const discountedPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (price > 0 ? price * 0.8 : 0));
-          const stock = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : (prod.stock !== undefined ? parseInt(prod.stock, 10) : 0);
-          const isLocalStock = p.isLocalStock !== undefined ? !!p.isLocalStock : (stock > 0);
-          const isCatalogOnly = !!p.isCatalogOnly;
-          const stockStatus = p.stockStatus || (isLocalStock && stock > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK_CATALOG');
+          const isLocalStock = p.isLocalStock !== undefined ? !!p.isLocalStock : (p.stock !== undefined && p.stock !== null && parseInt(p.stock, 10) > 0 && p.price !== null);
+          const isCatalogOnly = !!p.isCatalogOnly || !isLocalStock;
+          const price = isLocalStock
+            ? parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (prod.defaultPrice || p.defaultPrice || 1450)))
+            : null;
+          const discountedPrice = (isLocalStock && price !== null)
+            ? parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (price * 0.8))
+            : null;
+          const stock = isLocalStock
+            ? ((p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : (prod.stock !== undefined ? parseInt(prod.stock, 10) : 14))
+            : 0;
+          const stockStatus = p.stockStatus || (isLocalStock ? 'IN_STOCK' : 'OUT_OF_STOCK_CATALOG');
           const crossReferences = p.crossReferences || prod.crossReferences || p.cross_references || prod.cross_references || [];
           const barcode = p.barcode || prod.barcode || '';
           const imageUrl = p.imageUrl || prod.imageUrl || (p.images && p.images[0]) || (prod.images && prod.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
@@ -1762,9 +1768,15 @@
 
       const searchInput = document.getElementById('store-search-input');
       if (searchInput) {
+        let searchDebounceTimer = null;
         searchInput.addEventListener('input', function() {
           currentSearchQuery = this.value.trim();
           buildAndFetchFilters();
+          applyClientFilters();
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(() => {
+            fetchProducts();
+          }, 350);
         });
       }
     }
@@ -2126,10 +2138,10 @@
           const brand = p.manufacturer || p.vehicleBrand || 'OEM';
           const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
           const sellerName = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'AFS Bayisi';
-          const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
-          const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
+          const isLocal = !!p.isLocalStock;
+          const listPrice = (p.price !== null && p.price !== undefined) ? parseFloat(p.price) : 0;
+          const netPrice = (p.discountedPrice !== null && p.discountedPrice !== undefined) ? parseFloat(p.discountedPrice) : (listPrice > 0 ? listPrice * 0.8 : 0);
           const stockVal = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : 0;
-          const isLocal = p.isLocalStock !== false && stockVal > 0;
           const img = p.imageUrl || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
           const isFav = favorites.includes(id);
 
@@ -2151,7 +2163,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Stokta Mevcut (${stockVal} Adet)
               </span>`
             : `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Stokta Yok / Katalog Referansı
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Katalog Ürünü / Stokta Yok
               </span>`;
 
           // prompt.md ADIM 2: Sepete Ekle veya Talep Et butonu
@@ -2239,10 +2251,10 @@
                     <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md mt-1">%20 B2B İskonto</span>
                   ` : `
                     <div class="text-right">
-                      <span class="text-xs text-slate-400 font-medium">Özel Sipariş</span>
-                      <div class="text-lg font-black text-slate-700 tracking-tight">Fiyat Alınız</div>
+                      <span class="text-xs text-slate-400 font-medium">Katalog Ürünü</span>
+                      <div class="text-lg font-black text-rose-600 tracking-tight">Fiyat Sorunuz</div>
                     </div>
-                    <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md mt-1 border border-blue-200">Katalog Siparişi</span>
+                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mt-1 border border-slate-200">Stokta Yok</span>
                   `}
                 </div>
 
@@ -2274,10 +2286,10 @@
         const brand = p.manufacturer || p.vehicleBrand || 'OEM';
         const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
         const sellerName = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'AFS Bayisi';
-        const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
-        const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
+        const isLocal = !!p.isLocalStock;
+        const listPrice = (p.price !== null && p.price !== undefined) ? parseFloat(p.price) : 0;
+        const netPrice = (p.discountedPrice !== null && p.discountedPrice !== undefined) ? parseFloat(p.discountedPrice) : (listPrice > 0 ? listPrice * 0.8 : 0);
         const stockVal = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : 0;
-        const isLocal = p.isLocalStock !== false && stockVal > 0;
         const img = p.imageUrl || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
         const isFav = favorites.includes(id);
 
@@ -2299,7 +2311,7 @@
               <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Stokta Mevcut (${stockVal} Adet)
             </span>`
           : `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Stokta Yok / Katalog Referansı
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Katalog Ürünü / Stokta Yok
             </span>`;
 
         // prompt.md ADIM 2: Sepete Ekle veya Talep Et butonu
@@ -2388,10 +2400,10 @@
                     <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">%20 B2B</span>
                   ` : `
                     <div>
-                      <span class="text-xs text-slate-400 font-medium">Özel Sipariş</span>
-                      <div class="text-base font-black text-slate-700 tracking-tight">Fiyat Alınız</div>
+                      <span class="text-xs text-slate-400 font-medium">Katalog Ürünü</span>
+                      <div class="text-base font-black text-rose-600 tracking-tight">Fiyat Sorunuz</div>
                     </div>
-                    <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">Katalog Siparişi</span>
+                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">Stokta Yok</span>
                   `}
                 </div>
 
@@ -2933,9 +2945,9 @@
       const models = prod.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
       const labor = prod.estimatedLaborTime || '45 Dk';
       const stock = parseInt(prod.stock !== undefined ? prod.stock : 14, 10);
-      const isLocal = prod.isLocalStock !== false && stock > 0;
-      const netPrice = parseFloat(prod.discountedPrice || prod.defaultPrice || 1450);
-      const listPrice = parseFloat(prod.defaultPrice || prod.listPrice || (netPrice * 1.25));
+      const isLocal = !!prod.isLocalStock;
+      const netPrice = (prod.discountedPrice !== null && prod.discountedPrice !== undefined) ? parseFloat(prod.discountedPrice) : ((prod.defaultPrice !== null && prod.defaultPrice !== undefined) ? parseFloat(prod.defaultPrice) : 1450);
+      const listPrice = (prod.defaultPrice !== null && prod.defaultPrice !== undefined) ? parseFloat(prod.defaultPrice) : (netPrice * 1.25);
       const img = prod.imageUrl || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
 
       const oeBadge = document.getElementById('detail-oe-badge');
@@ -2958,7 +2970,7 @@
           listPriceEl.style.display = '';
         }
       } else {
-        if (priceEl) priceEl.textContent = 'Fiyat Alınız';
+        if (priceEl) priceEl.textContent = 'Fiyat Sorunuz';
         if (listPriceEl) listPriceEl.style.display = 'none';
       }
 
@@ -3106,8 +3118,8 @@
 
       return items.sort((a, b) => {
         // prompt.md ADIM 1: Lokal stoklu olanlar, harici katalog referanslarının her zaman üstündedir
-        const aLocal = a.isLocalStock !== false && (a.stock || 0) > 0;
-        const bLocal = b.isLocalStock !== false && (b.stock || 0) > 0;
+        const aLocal = !!a.isLocalStock;
+        const bLocal = !!b.isLocalStock;
         if (aLocal && !bLocal) return -1;
         if (!aLocal && bLocal) return 1;
 
