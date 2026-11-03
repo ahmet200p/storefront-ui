@@ -649,11 +649,11 @@
         </div>
 
         <!-- ==================================================================
-             TECHNICAL BUYING GUIDE CARD
-             "Otomotiv Yedek Parçaları Satın Alma Rehberi"
+             TECHNICAL BUYING GUIDE CARD (Dinamik ve Koşullu Satın Alma Rehberi)
+             prompt.md ADIM 1: id="dynamic-guide-section", varsayılan olarak hidden
              ================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xs" id="technical-buying-guide-section">
-          <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-100 flex items-center justify-between" id="guide-header-title">
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xs hidden" id="dynamic-guide-section" style="display: none;">
+          <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-100 flex items-center justify-between" id="guide-title">
             <span>Otomotiv Yedek Parçaları Satın Alma Rehberi</span>
             <span class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full">B2B Teknik Kılavuz</span>
           </h2>
@@ -661,7 +661,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Left Text Content (2 Columns) -->
-            <div class="lg:col-span-2 space-y-3.5 text-xs text-slate-600 leading-relaxed">
+            <div class="lg:col-span-2 space-y-3.5 text-xs text-slate-600 leading-relaxed" id="guide-content">
               <div>
                 <h3 class="font-black text-slate-900 mb-1">PR Kodları ve Disk Çapları:</h3>
                 <p>
@@ -689,26 +689,28 @@
               <div>
                 <div class="flex items-center justify-between pb-2 border-b border-slate-200/80 mb-3">
                   <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider">Hızlı Referans Tablosu</h4>
-                  <span class="text-[10px] text-blue-600 font-bold">OEM VAG</span>
+                  <span class="text-[10px] text-blue-600 font-bold" id="guide-badge">OEM VAG</span>
                 </div>
-                <ul class="space-y-2 text-xs font-mono">
-                  <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
-                    <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balatası:</span>
-                    <strong class="text-slate-900 font-bold">5Q0 698 151 B</strong>
-                  </li>
-                  <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
-                    <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Diski:</span>
-                    <strong class="text-slate-900 font-bold">5Q0 615 301 H (288mm)</strong>
-                  </li>
-                  <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
-                    <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Balatası:</span>
-                    <strong class="text-slate-900 font-bold">5Q0 698 451</strong>
-                  </li>
-                  <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
-                    <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Diski:</span>
-                    <strong class="text-slate-900 font-bold">5Q0 615 601 F (272mm)</strong>
-                  </li>
-                </ul>
+                <div id="guide-table">
+                  <ul class="space-y-2 text-xs font-mono">
+                    <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+                      <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balatası:</span>
+                      <strong class="text-slate-900 font-bold">5Q0 698 151 B</strong>
+                    </li>
+                    <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+                      <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Diski:</span>
+                      <strong class="text-slate-900 font-bold">5Q0 615 301 H (288mm)</strong>
+                    </li>
+                    <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+                      <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Balatası:</span>
+                      <strong class="text-slate-900 font-bold">5Q0 698 451</strong>
+                    </li>
+                    <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+                      <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Diski:</span>
+                      <strong class="text-slate-900 font-bold">5Q0 615 601 F (272mm)</strong>
+                    </li>
+                  </ul>
+                </div>
                 <div class="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900">
                   ⚠️ Emin olamadığınız parça veya PR kodu eşleşmelerinde şasi numaranızla WhatsApp B2B Destek hattımıza danışabilirsiniz.
                 </div>
@@ -1114,7 +1116,7 @@
 
     // Filter States
     let currentBrand = '';
-    let currentCategory = 'Fren Sistemi';
+    let currentCategory = '';
     let currentSubCategories = [];
     let currentManufacturers = [];
     let currentSearchQuery = '';
@@ -1128,6 +1130,393 @@
 
     // Active Vehicle Profile (Default: null - hiçbir araç/marka seçili değil)
     let activeVehicle = null;
+
+    // ==========================================================================
+    // SATIN ALMA REHBERİ BİLGİ BANKASI VE DİNAMİK YÖNETİMİ (prompt.md ADIM 2 & 3)
+    // ==========================================================================
+    const guideData = {
+      "Fren Sistemi": {
+        title: "Fren Sistemi Satın Alma ve Değişim Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">PR Kodları ve Disk Çapları:</h3>
+            <p>Modern binek ve hafif ticari araçlarda donanım paketine bağlı olarak farklı ön disk çapları (276mm, 288mm veya 312mm) bulunmaktadır. Doğru parçayı seçmek için aracınızın teknik kılavuzundaki ve bagaj havuzundaki etikette yer alan <strong>PR kodlarını (Örn: 1ZA / 1ZE)</strong> kontrol etmeniz önerilir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Orijinal Ekipman (OEM) ve Muadil Standartları:</h3>
+            <p>Mühendislik standartlarına tam uyum sağlayan <strong>Ferodo, Brembo, TRW ve Bosch</strong> gibi OEM üreticiler, fabrika montajında tercih edilen standartları sunar. Fren performansını korumak için balataların disk alaşımı ile uyumlu seçilmesi gerekir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Fren Hidroliği ve Hortum Güvenliği:</h3>
+            <p>Balata değişimlerinde DOT4 / DOT5.1 fren hidroliği kaynama noktası kontrol edilmeli; aşırı sıcaklık ve basınç altında genleşmeyi önlemek için takviyeli hortumlar tercih edilmelidir.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balatası:</span>
+              <strong class="text-slate-900 font-bold">5Q0 698 151 B</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Diski:</span>
+              <strong class="text-slate-900 font-bold">5Q0 615 301 H (288mm)</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Balatası:</span>
+              <strong class="text-slate-900 font-bold">5Q0 698 451</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Diski:</span>
+              <strong class="text-slate-900 font-bold">5Q0 615 601 F (272mm)</strong>
+            </li>
+          </ul>
+        `
+      },
+      "Motor & Şanzıman": {
+        title: "Motor & Şanzıman Aksamı Satın Alma Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Motor Kodu ve Subap Sayısı Tespiti:</h3>
+            <p>Triger seti, devirdaim su pompası ve silindir kapak contası siparişlerinde ruhsattaki <strong>Motor Kodu (Örn: K9K, EA888, OM651)</strong> birebir eşleştirilmelidir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Triger Seti & Devirdaim Birlikte Değişimi:</h3>
+            <p>İşçilik maliyetini düşürmek ve rulman kilitlemelerini önlemek adına triger kayış değişiminde gergiler ve devirdaim su pompasının set olarak yenilenmesi üretici tavsiyesidir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Şanzıman Yağı ve Filtre Standartları:</h3>
+            <p>Otomatik şanzımanlarda (DSG, EDC, ZF 8HP) üretici onaylı OEM viskozite ve onay koduna (Örn: G 052 182 A2) sahip yağlar kullanılmalıdır.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Triger Kayış Seti:</span>
+              <strong class="text-slate-900 font-bold">04L 198 119 A</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Devirdaim Su Pompası:</span>
+              <strong class="text-slate-900 font-bold">04L 121 011 N</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Kapak Contası:</span>
+              <strong class="text-slate-900 font-bold">04L 103 383 AK</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">DSG / Şanzıman Filtresi:</span>
+              <strong class="text-slate-900 font-bold">02E 305 051 C</strong>
+            </li>
+          </ul>
+        `
+      },
+      "Süspansiyon & Direksiyon": {
+        title: "Süspansiyon & Yürüyen Aksam Satın Alma Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Sağ / Sol ve Ön / Arka Yön Ayrımı:</h3>
+            <p>Salıncaklar, rot başları ve z-rotlar araç üzerinde yönlü parçalardır. Sipariş oluştururken şasi ve montaj tarafının (Sağ/Sol) doğru seçildiğinden emin olunmalıdır.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Amortisörlerin Çift Olarak Değişimi:</h3>
+            <p>Yol tutuş stabilitesi ve fren mesafesinin korunması için ön veya arka amortisörlerin daima aks bazında çift (sağ + sol) olarak yenilenmesi şarttır.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Amortisör (Sağ/Sol):</span>
+              <strong class="text-slate-900 font-bold">5Q0 413 031 ET</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Salıncak (Sol):</span>
+              <strong class="text-slate-900 font-bold">5Q0 407 151 J</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Z-Rot (Askı Rotu):</span>
+              <strong class="text-slate-900 font-bold">5Q0 411 315 B</strong>
+            </li>
+          </ul>
+        `
+      },
+      "Filtre & Bakım": {
+        title: "Periyodik Bakım & Filtre Seti Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">4'lü Filtre Seti Uyumluluğu:</h3>
+            <p>Yağ, hava, yakıt ve polen filtrelerinin aracın model yılı ve şasi revizyonuna göre UFI veya MANN tip gövdeye sahip olup olmadığı kontrol edilmelidir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">DPF Uyumlu Motor Yağı:</h3>
+            <p>Dizel Partikül Filtreli (DPF) araçlarda düşük kül oranlı (Low SAPS) onaylı 5W-30 veya 0W-30 OEM onaylı tam sentetik motor yağları kullanılmalıdır.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Yağ Filtresi:</span>
+              <strong class="text-slate-900 font-bold">03N 115 562 B</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Hava Filtresi:</span>
+              <strong class="text-slate-900 font-bold">5Q0 129 620 B</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Karbonlu Polen:</span>
+              <strong class="text-slate-900 font-bold">5Q0 819 653</strong>
+            </li>
+          </ul>
+        `
+      },
+      "Mercedes": {
+        title: "Mercedes-Benz Orijinal Yedek Parça Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Şasi Numarası (VIN) Kontrolü Zorunludur:</h3>
+            <p>Mercedes araçlarda şasi numarası (VIN) kontrolü zorunludur. WDF / WDD kodlu 17 haneli şasi numarası üzerinden EPC kontrolü yapılmadan sipariş verilmemelidir. Donanıma (AMG Line, Avantgarde, Exclusive) göre disk ve kaliper çapları değişmektedir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Orijinal Yıldızlı Parça Standartları:</h3>
+            <p>Yürüyen aksam ve şanzıman parçalarında Lemförder, Sachs ve Bilstein OEM üreticileri tercih edilmelidir.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balata Seti:</span>
+              <strong class="text-slate-900 font-bold">A 000 420 30 02</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Hava Filtresi (Set):</span>
+              <strong class="text-slate-900 font-bold">A 651 094 00 04</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">7G/9G Tronic Filtre:</span>
+              <strong class="text-slate-900 font-bold">A 222 277 20 00</strong>
+            </li>
+          </ul>
+        `
+      },
+      "Renault": {
+        title: "Renault & Dacia Orijinal Yedek Parça Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">OEM Kod ve Kaliper Tipi Eşleştirmesi:</h3>
+            <p>Renault ve Dacia araçlarda kaliper tipi (Lucas/TRW veya Bosch tip) ve 41060 / 7701 serisi OEM numaraları kontrol edilmelidir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">1.5 dCi Motor Bakım Özellikleri:</h3>
+            <p>K9K 1.5 dCi motorlarda triger seti, v-kayışı ve mazot filtresinin periyodik kilometrelerde OEM standartlarında yenilenmesi subap ve enjektör sağlığı için zorunludur.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balata Tk.:</span>
+              <strong class="text-slate-900 font-bold">410601241R</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Diski (Çift):</span>
+              <strong class="text-slate-900 font-bold">7701207795 (259mm)</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">1.5 dCi Triger Seti:</span>
+              <strong class="text-slate-900 font-bold">130C11508R</strong>
+            </li>
+          </ul>
+        `
+      },
+      "Volkswagen": {
+        title: "Volkswagen & VAG Grubu Orijinal Yedek Parça Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">PR Kodları ve Disk Çapları:</h3>
+            <p>Modern binek ve ticari araç modellerinde fabrika çıkış donanıma bağlı olarak farklı ön disk çapları (276mm, 288mm veya 312mm) bulunmaktadır. Doğru parçayı seçmek için aracınızın teknik kılavuzundaki ve bagaj havuzundaki etikette yer alan <strong>PR kodlarını (Örn: 1ZA / 1ZE)</strong> kontrol etmeniz önerilir.</p>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">Orijinal Ekipman (OEM) ve Muadil:</h3>
+            <p>Mühendislik standartlarına tam uyum sağlayan <strong>Ferodo, Brembo ve Bosch</strong> gibi OEM üreticiler, fabrika montajında tercih edilen standartları sunar. Fren performansını fabrika seviyesinde korumak için balataların disk materyali ile uyumlu seçilmesi tavsiye edilir.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balatası:</span>
+              <strong class="text-slate-900 font-bold">5Q0 698 151 B</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Diski:</span>
+              <strong class="text-slate-900 font-bold">5Q0 615 301 H (288mm)</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Balatası:</span>
+              <strong class="text-slate-900 font-bold">5Q0 698 451</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Arka Fren Diski:</span>
+              <strong class="text-slate-900 font-bold">5Q0 615 601 F (272mm)</strong>
+            </li>
+          </ul>
+        `
+      },
+      "BMW": {
+        title: "BMW Orijinal Yedek Parça Rehberi",
+        content: `
+          <div>
+            <h3 class="font-black text-slate-900 mb-1">BMW ETK ve Şasi Doğrulaması:</h3>
+            <p>BMW araçlarında son 7 haneli şasi sorgusu ile parça kataloğundan tam eşleşme sağlanmalıdır. M Sport ve standart fren kaliper ve disk çapları farklıdır.</p>
+          </div>
+        `,
+        tableHtml: `
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Ön Fren Balatası:</span>
+              <strong class="text-slate-900 font-bold">34 11 6 850 568</strong>
+            </li>
+            <li class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+              <span class="font-sans text-slate-600 font-medium text-[11px]">Fren İkaz Fişi:</span>
+              <strong class="text-slate-900 font-bold">34 35 6 792 289</strong>
+            </li>
+          </ul>
+        `
+      }
+    };
+
+    function updateDynamicBuyingGuide() {
+      const guideSection = document.getElementById('dynamic-guide-section');
+      const guideTitle = document.getElementById('guide-title') || document.getElementById('guide-header-title');
+      const guideContent = document.getElementById('guide-content');
+      const guideTable = document.getElementById('guide-table');
+
+      if (!guideSection) return;
+
+      // Tüm aktif filtre ve arama parametrelerini topla
+      const activeTerms = [];
+
+      if (currentCategory && currentCategory !== 'all' && currentCategory !== 'Tüm Kategoriler') {
+        activeTerms.push(currentCategory.trim());
+      }
+      if (Array.isArray(currentSubCategories) && currentSubCategories.length > 0) {
+        currentSubCategories.forEach(s => activeTerms.push(s.trim()));
+      }
+      if (currentBrand && currentBrand !== 'all') {
+        activeTerms.push(currentBrand.trim());
+      }
+      if (activeVehicle && (activeVehicle.brand || activeVehicle.name)) {
+        const vb = (activeVehicle.brand || activeVehicle.name || '').trim();
+        if (vb && !activeTerms.includes(vb)) activeTerms.push(vb);
+      }
+      if (Array.isArray(currentManufacturers) && currentManufacturers.length > 0) {
+        currentManufacturers.forEach(m => activeTerms.push(m.trim()));
+      }
+      if (currentSearchQuery && currentSearchQuery.trim()) {
+        activeTerms.push(currentSearchQuery.trim());
+      }
+      if (currentOemFilter && currentOemFilter.trim()) {
+        activeTerms.push(currentOemFilter.trim());
+      }
+
+      // prompt.md ADIM 3: EĞER YOKSA veya FİLTRE TEMİZLENDİYSE: Kutuya hidden ekle ve ekrandan kaldır
+      if (activeTerms.length === 0) {
+        guideSection.classList.add('hidden');
+        guideSection.style.display = 'none';
+        return;
+      }
+
+      // prompt.md ADIM 3: guideData objesinde eşleşen var mı kontrol et
+      let matchedGuide = null;
+      const guideKeys = Object.keys(guideData);
+
+      for (const term of activeTerms) {
+        const tLower = term.toLowerCase();
+
+        // Doğrudan anahtar kontrolü
+        for (const k of guideKeys) {
+          const kLower = k.toLowerCase();
+          if (kLower === tLower || tLower.includes(kLower) || kLower.includes(tLower)) {
+            matchedGuide = guideData[k];
+            break;
+          }
+        }
+        if (matchedGuide) break;
+
+        // Kategori / Terim kök kontrolleri
+        if (tLower.includes('fren') || tLower.includes('balata') || tLower.includes('disk') || tLower.includes('kaliper')) {
+          matchedGuide = guideData["Fren Sistemi"];
+          break;
+        }
+        if (tLower.includes('motor') || tLower.includes('şanzıman') || tLower.includes('sanziman') || tLower.includes('triger') || tLower.includes('devirdaim')) {
+          matchedGuide = guideData["Motor & Şanzıman"];
+          break;
+        }
+        if (tLower.includes('süspansiyon') || tLower.includes('suspansiyon') || tLower.includes('amortisör') || tLower.includes('salıncak') || tLower.includes('rot')) {
+          matchedGuide = guideData["Süspansiyon & Direksiyon"];
+          break;
+        }
+        if (tLower.includes('filtre') || tLower.includes('bakım') || tLower.includes('bakim')) {
+          matchedGuide = guideData["Filtre & Bakım"];
+          break;
+        }
+        if (tLower.includes('mercedes')) {
+          matchedGuide = guideData["Mercedes"];
+          break;
+        }
+        if (tLower.includes('renault') || tLower.includes('clio') || tLower.includes('megane') || tLower.includes('dacia')) {
+          matchedGuide = guideData["Renault"];
+          break;
+        }
+        if (tLower.includes('volkswagen') || tLower.includes('golf') || tLower.includes('passat') || tLower.includes('vag')) {
+          matchedGuide = guideData["Volkswagen"];
+          break;
+        }
+        if (tLower.includes('bmw')) {
+          matchedGuide = guideData["BMW"];
+          break;
+        }
+      }
+
+      // prompt.md ADIM 3: EĞER VARSA: Gizliliği kaldır ve alanları doldur
+      if (matchedGuide) {
+        if (guideTitle) {
+          guideTitle.innerHTML = `<span>${matchedGuide.title}</span><span class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full">B2B Teknik Kılavuz</span>`;
+        }
+        if (guideContent) {
+          guideContent.innerHTML = matchedGuide.content;
+        }
+        if (guideTable) {
+          guideTable.innerHTML = matchedGuide.tableHtml;
+        }
+        guideSection.classList.remove('hidden');
+        guideSection.style.display = '';
+      } else {
+        guideSection.classList.add('hidden');
+        guideSection.style.display = 'none';
+      }
+    }
+    window.guideData = guideData;
+    window.updateDynamicBuyingGuide = updateDynamicBuyingGuide;
+
+    try {
+      Object.defineProperty(window, 'currentCategory', {
+        get: () => currentCategory,
+        set: (v) => { currentCategory = v; },
+        configurable: true
+      });
+      Object.defineProperty(window, 'currentBrand', {
+        get: () => currentBrand,
+        set: (v) => { currentBrand = v; },
+        configurable: true
+      });
+      Object.defineProperty(window, 'currentSearchQuery', {
+        get: () => currentSearchQuery,
+        set: (v) => { currentSearchQuery = v; },
+        configurable: true
+      });
+      Object.defineProperty(window, 'activeVehicle', {
+        get: () => activeVehicle,
+        set: (v) => { activeVehicle = v; },
+        configurable: true
+      });
+    } catch (e) {}
 
     // --------------------------------------------------------------------------
     // 1. INITIALIZATION & DATA FETCHING
@@ -1330,6 +1719,14 @@
           buildAndFetchFilters();
         });
       }
+
+      const searchInput = document.getElementById('store-search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          currentSearchQuery = this.value.trim();
+          buildAndFetchFilters();
+        });
+      }
     }
 
     // --------------------------------------------------------------------------
@@ -1415,6 +1812,9 @@
           criteriaText.classList.add('hidden');
         }
       }
+
+      // prompt.md ADIM 3: Dinamik Satın Alma Rehberi güncelleme
+      updateDynamicBuyingGuide();
     }
     window.buildAndFetchFilters = buildAndFetchFilters;
     window.updateDynamicHeaders = buildAndFetchFilters;
@@ -1925,6 +2325,7 @@
     }
 
     function resetAllFilters() {
+      currentCategory = '';
       currentSearchQuery = '';
       currentOemFilter = '';
       currentSubCategories = [];
@@ -1935,6 +2336,11 @@
       currentSort = 'smart';
       currentBrand = '';
       activeVehicle = null;
+
+      document.querySelectorAll('.nav-cat-btn').forEach(b => {
+        b.classList.remove('bg-slate-800', 'text-orange-400', 'font-extrabold', 'border-b-2', 'border-orange-500', 'active-cat');
+        b.classList.add('hover:bg-slate-800', 'hover:text-white');
+      });
 
       const sInput = document.getElementById('store-search-input');
       if (sInput) sInput.value = '';
