@@ -1647,6 +1647,9 @@
           const price = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (prod.defaultPrice || p.defaultPrice || 1450)));
           const discountedPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (price > 0 ? price * 0.8 : 0));
           const stock = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : (prod.stock !== undefined ? parseInt(prod.stock, 10) : 0);
+          const isLocalStock = p.isLocalStock !== undefined ? !!p.isLocalStock : (stock > 0);
+          const isCatalogOnly = !!p.isCatalogOnly;
+          const stockStatus = p.stockStatus || (isLocalStock && stock > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK_CATALOG');
           const crossReferences = p.crossReferences || prod.crossReferences || p.cross_references || prod.cross_references || [];
           const barcode = p.barcode || prod.barcode || '';
           const imageUrl = p.imageUrl || prod.imageUrl || (p.images && p.images[0]) || (prod.images && prod.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
@@ -1662,6 +1665,9 @@
             defaultPrice: price,
             discountedPrice,
             stock,
+            isLocalStock,
+            isCatalogOnly,
+            stockStatus,
             oeNumber,
             barcode,
             crossReferences,
@@ -1686,6 +1692,9 @@
               price,
               defaultPrice: price,
               stock,
+              isLocalStock,
+              isCatalogOnly,
+              stockStatus,
               oeNumber,
               barcode,
               crossReferences,
@@ -2090,7 +2099,7 @@
       const paginationRange = document.getElementById('pagination-range');
 
       const count = displayedProducts.length;
-      if (activePartsBadge) activePartsBadge.textContent = String(count > 0 ? count : 312);
+      if (activePartsBadge) activePartsBadge.textContent = String(count);
       if (totalCountTitle) totalCountTitle.textContent = String(count);
       if (paginationTotal) paginationTotal.textContent = String(count);
       if (paginationRange) paginationRange.textContent = count > 0 ? `1 - ${count}` : '0 - 0';
@@ -2120,6 +2129,7 @@
           const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
           const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
           const stockVal = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : 0;
+          const isLocal = p.isLocalStock !== false && stockVal > 0;
           const img = p.imageUrl || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
           const isFav = favorites.includes(id);
 
@@ -2135,16 +2145,32 @@
             crossRefsDisplay = 'Orijinal OEM Eşdeğer';
           }
 
-          const stockBadge = stockVal > 0
-            ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded font-bold">Stokta Mevcut (Stok: ${stockVal})</span>`
-            : `<span class="bg-red-100 text-red-700 px-2 py-1 rounded font-bold">Stokta Yok</span>`;
+          // prompt.md ADIM 2: Stok Gösterimi ve Kaynak Rozeti
+          const stockBadge = isLocal
+            ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-green-200 shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Stokta Mevcut (${stockVal} Adet)
+              </span>`
+            : `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Stokta Yok / Katalog Referansı
+              </span>`;
+
+          // prompt.md ADIM 2: Sepete Ekle veya Talep Et butonu
+          const actionBtnHtml = isLocal
+            ? `<button type="button" onclick="addToCart('${escapeJs(id)}', '${escapeJs(oe)}', '${escapeJs(name)}', ${listPrice}, ${netPrice}, ${stockVal}, '${escapeJs(img)}')"
+                class="flex-1 h-10 bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>Sepete Ekle</span>
+              </button>`
+            : `<button type="button" onclick="requestCatalogQuote('${escapeJs(id)}', '${escapeJs(oe)}', '${escapeJs(name)}')"
+                class="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer" title="Parça temin talebinde bulunun">
+                <span>📞 Talep Et</span>
+              </button>`;
 
           return `
             <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-slate-300 transition-all flex flex-col md:flex-row items-stretch md:items-center justify-between p-4 gap-5 group">
               
               <!-- Sol: Parça Görseli (prompt.md ADIM 2: onclick="openImageModal(...)") -->
-              <div class="relative w-full md:w-44 h-40 shrink-0 bg-slate-50/80 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer group/img" onclick="openImageModal('${escapeHtml(img)}', '${escapeHtml(name)}')">
-                <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-36 object-contain group-hover/img:scale-105 transition-transform duration-300 cursor-pointer" onclick="openImageModal('${escapeHtml(img)}', '${escapeHtml(name)}')">
+              <div class="relative w-full md:w-44 h-40 shrink-0 bg-slate-50/80 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer group/img" onclick="openImageModal('${escapeJs(img)}', '${escapeJs(name)}')">
+                <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-36 object-contain group-hover/img:scale-105 transition-transform duration-300 cursor-pointer" onclick="openImageModal('${escapeJs(img)}', '${escapeJs(name)}')">
                 <div class="absolute inset-0 bg-black/10 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
                   <span class="bg-black/70 text-white text-[11px] font-bold px-2 py-0.5 rounded-md backdrop-blur-xs flex items-center gap-1 shadow-sm">🔍 Büyüt</span>
                 </div>
@@ -2166,14 +2192,25 @@
                     </button>
                   </div>
 
-                  <!-- prompt.md ADIM 3: Diğer Referanslar (Cross-References) -->
-                  <div class="text-xs text-gray-500 mb-1.5 font-medium">Diğer Referanslar: ${escapeHtml(crossRefsDisplay)}</div>
-
                   <h3 class="text-base font-bold text-slate-900 hover:text-orange-600 cursor-pointer transition-colors leading-snug line-clamp-2" onclick="openProductDetailModal('${id}')" title="${escapeHtml(name)}">
                     ${escapeHtml(name)}
                   </h3>
 
                   <div class="text-xs text-slate-500 font-medium truncate mt-1">🚗 ${escapeHtml(models)}</div>
+
+                  <!-- prompt.md ADIM 3: Orijinal OE ve Muadil Marka Kodları Listesi -->
+                  <div class="mt-2 text-xs text-slate-600 bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 font-mono space-y-1">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400 font-sans font-medium text-[11px]">Orijinal OE:</span>
+                      <span class="font-extrabold text-slate-900">${escapeHtml(oe)}</span>
+                    </div>
+                    ${crossRefsDisplay ? `
+                    <div class="flex items-start justify-between gap-2 pt-1 border-t border-slate-200/60">
+                      <span class="text-slate-400 font-sans font-medium text-[11px] shrink-0">Muadil Kodlar:</span>
+                      <span class="text-slate-700 font-semibold text-right break-all line-clamp-2" title="${escapeHtml(crossRefsDisplay)}">${escapeHtml(crossRefsDisplay)}</span>
+                    </div>
+                    ` : ''}
+                  </div>
                 </div>
 
                 <div class="mt-3 flex flex-wrap items-center gap-3">
@@ -2183,33 +2220,42 @@
                     </svg>
                     <span>Satıcı: <strong class="font-semibold text-slate-900">${escapeHtml(sellerName)}</strong></span>
                   </div>
-                  <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                    ✓ Aynı Gün Kargo
-                  </span>
+                  ${isLocal ? `
+                    <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">✓ Aynı Gün Kargo</span>
+                  ` : `
+                    <span class="text-xs text-blue-600 font-bold flex items-center gap-1">⚡ Tedarik Edilebilir</span>
+                  `}
                 </div>
               </div>
 
               <!-- Sağ: Fiyat ve Sepete Ekle -->
               <div class="w-full md:w-56 shrink-0 md:border-l md:border-slate-100 md:pl-5 flex flex-col justify-between py-1">
                 <div class="flex md:flex-col justify-between items-baseline md:items-end mb-3">
-                  <div class="text-right">
-                    <span class="text-xs text-slate-400 line-through font-mono font-medium">₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
-                    <div class="text-xl font-black text-slate-900 font-mono tracking-tight">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span class="text-[10px] font-bold text-slate-400 uppercase">+KDV</span></div>
-                  </div>
-                  <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md mt-1">%20 B2B İskonto</span>
+                  ${isLocal ? `
+                    <div class="text-right">
+                      <span class="text-xs text-slate-400 line-through font-mono font-medium">₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                      <div class="text-xl font-black text-slate-900 font-mono tracking-tight">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span class="text-[10px] font-bold text-slate-400 uppercase">+KDV</span></div>
+                    </div>
+                    <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md mt-1">%20 B2B İskonto</span>
+                  ` : `
+                    <div class="text-right">
+                      <span class="text-xs text-slate-400 font-medium">Özel Sipariş</span>
+                      <div class="text-lg font-black text-slate-700 tracking-tight">Fiyat Alınız</div>
+                    </div>
+                    <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md mt-1 border border-blue-200">Katalog Siparişi</span>
+                  `}
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-1.5 h-10">
-                    <button type="button" onclick="changeQtyInput('${id}', -1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">-</button>
-                    <input type="number" id="qty-${id}" value="1" min="1" max="${stockVal > 0 ? stockVal : 1}" class="w-8 text-center text-xs font-bold bg-transparent border-0 focus:outline-none" readonly>
-                    <button type="button" onclick="changeQtyInput('${id}', 1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">+</button>
-                  </div>
+                  ${isLocal ? `
+                    <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-1.5 h-10">
+                      <button type="button" onclick="changeQtyInput('${id}', -1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">-</button>
+                      <input type="number" id="qty-${id}" value="1" min="1" max="${stockVal > 0 ? stockVal : 1}" class="w-8 text-center text-xs font-bold bg-transparent border-0 focus:outline-none" readonly>
+                      <button type="button" onclick="changeQtyInput('${id}', 1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">+</button>
+                    </div>
+                  ` : ''}
 
-                  <button type="button" onclick="addToCart('${id}', '${escapeHtml(oe)}', '${escapeHtml(name)}', ${listPrice}, ${netPrice}, ${stockVal}, '${escapeHtml(img)}')"
-                    class="flex-1 h-10 bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                    <span>Sepete Ekle</span>
-                  </button>
+                  ${actionBtnHtml}
                 </div>
               </div>
 
@@ -2231,6 +2277,7 @@
         const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
         const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
         const stockVal = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock, 10) : 0;
+        const isLocal = p.isLocalStock !== false && stockVal > 0;
         const img = p.imageUrl || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
         const isFav = favorites.includes(id);
 
@@ -2246,9 +2293,25 @@
           crossRefsDisplay = 'Orijinal OEM Eşdeğer';
         }
 
-        const stockBadge = stockVal > 0
-          ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded font-bold">Stokta Mevcut (Stok: ${stockVal})</span>`
-          : `<span class="bg-red-100 text-red-700 px-2 py-1 rounded font-bold">Stokta Yok</span>`;
+        // prompt.md ADIM 2: Stok Gösterimi ve Kaynak Rozeti
+        const stockBadge = isLocal
+          ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-green-200 shadow-2xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Stokta Mevcut (${stockVal} Adet)
+            </span>`
+          : `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Stokta Yok / Katalog Referansı
+            </span>`;
+
+        // prompt.md ADIM 2: Sepete Ekle veya Talep Et butonu
+        const actionBtnHtml = isLocal
+          ? `<button type="button" onclick="addToCart('${escapeJs(id)}', '${escapeJs(oe)}', '${escapeJs(name)}', ${listPrice}, ${netPrice}, ${stockVal}, '${escapeJs(img)}')"
+              class="flex-1 h-10 bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+              <span>Sepete Ekle</span>
+            </button>`
+          : `<button type="button" onclick="requestCatalogQuote('${escapeJs(id)}', '${escapeJs(oe)}', '${escapeJs(name)}')"
+              class="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer" title="Parça temin talebinde bulunun">
+              <span>📞 Talep Et</span>
+            </button>`;
 
         return `
           <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-slate-300 transition-all flex flex-col justify-between overflow-hidden group">
@@ -2263,24 +2326,21 @@
                   <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                     ${escapeHtml(brand)}
                   </span>
-                  <button type="button" onclick="event.stopPropagation(); toggleFavorite('${id}')" class="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors" title="Favorilere Ekle">
+                  <button type="button" onclick="event.stopPropagation(); toggleFavorite('${escapeJs(id)}')" class="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors" title="Favorilere Ekle">
                     ${isFav ? '❤️' : '🤍'}
                   </button>
                 </div>
               </div>
 
-              <!-- prompt.md ADIM 3: Diğer Referanslar (Cross-References) -->
-              <div class="text-xs text-gray-500 mb-2 truncate font-medium">Diğer Referanslar: ${escapeHtml(crossRefsDisplay)}</div>
-
               <!-- Büyütülmüş Görsel Alanı (prompt.md ADIM 2: onclick="openImageModal(...)") -->
-              <div class="relative h-56 bg-slate-50/80 rounded-2xl overflow-hidden flex items-center justify-center p-4 cursor-pointer group/img" onclick="openImageModal('${escapeHtml(img)}', '${escapeHtml(name)}')">
-                <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-52 object-contain group-hover/img:scale-105 transition-transform duration-300 cursor-pointer" onclick="openImageModal('${escapeHtml(img)}', '${escapeHtml(name)}')">
+              <div class="relative h-56 bg-slate-50/80 rounded-2xl overflow-hidden flex items-center justify-center p-4 cursor-pointer group/img" onclick="openImageModal('${escapeJs(img)}', '${escapeJs(name)}')">
+                <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-52 object-contain group-hover/img:scale-105 transition-transform duration-300 cursor-pointer" onclick="openImageModal('${escapeJs(img)}', '${escapeJs(name)}')">
                 <div class="absolute inset-0 bg-black/10 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
                   <span class="bg-black/70 text-white text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs flex items-center gap-1 shadow-sm">🔍 Büyüt</span>
                 </div>
               </div>
 
-              <!-- prompt.md ADIM 3: Stok Gösterimi -->
+              <!-- prompt.md ADIM 2: Stok Gösterimi -->
               <div class="mt-2.5">
                 ${stockBadge}
               </div>
@@ -2294,6 +2354,20 @@
                 </h3>
                 
                 <div class="text-xs text-slate-500 font-medium truncate mt-1">🚗 ${escapeHtml(models)}</div>
+
+                <!-- prompt.md ADIM 3: Orijinal OE ve Muadil Marka Kodları Listesi -->
+                <div class="mt-2 text-xs text-slate-600 bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 font-mono space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-sans font-medium text-[11px]">Orijinal OE:</span>
+                    <span class="font-extrabold text-slate-900">${escapeHtml(oe)}</span>
+                  </div>
+                  ${crossRefsDisplay ? `
+                  <div class="flex items-start justify-between gap-2 pt-1 border-t border-slate-200/60">
+                    <span class="text-slate-400 font-sans font-medium text-[11px] shrink-0">Muadil Kodlar:</span>
+                    <span class="text-slate-700 font-semibold text-right break-all line-clamp-2" title="${escapeHtml(crossRefsDisplay)}">${escapeHtml(crossRefsDisplay)}</span>
+                  </div>
+                  ` : ''}
+                </div>
                 
                 <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200 mt-2 shadow-2xs">
                   <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -2306,24 +2380,31 @@
               <!-- Fiyat ve Sepet Butonları -->
               <div class="mt-4 pt-3 border-t border-slate-100">
                 <div class="flex items-baseline justify-between mb-2.5">
-                  <div>
-                    <span class="text-xs text-slate-400 line-through font-mono font-medium">₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
-                    <div class="text-lg sm:text-xl font-black text-slate-900 font-mono tracking-tight">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span class="text-[10px] font-bold text-slate-400 uppercase">+KDV</span></div>
-                  </div>
-                  <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">%20 B2B</span>
+                  ${isLocal ? `
+                    <div>
+                      <span class="text-xs text-slate-400 line-through font-mono font-medium">₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                      <div class="text-lg sm:text-xl font-black text-slate-900 font-mono tracking-tight">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span class="text-[10px] font-bold text-slate-400 uppercase">+KDV</span></div>
+                    </div>
+                    <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">%20 B2B</span>
+                  ` : `
+                    <div>
+                      <span class="text-xs text-slate-400 font-medium">Özel Sipariş</span>
+                      <div class="text-base font-black text-slate-700 tracking-tight">Fiyat Alınız</div>
+                    </div>
+                    <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">Katalog Siparişi</span>
+                  `}
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-1.5 h-10">
-                    <button type="button" onclick="changeQtyInput('${id}', -1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">-</button>
-                    <input type="number" id="qty-${id}" value="1" min="1" max="${stockVal > 0 ? stockVal : 1}" class="w-8 text-center text-xs font-bold bg-transparent border-0 focus:outline-none" readonly>
-                    <button type="button" onclick="changeQtyInput('${id}', 1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">+</button>
-                  </div>
+                  ${isLocal ? `
+                    <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-1.5 h-10">
+                      <button type="button" onclick="changeQtyInput('${id}', -1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">-</button>
+                      <input type="number" id="qty-${id}" value="1" min="1" max="${stockVal > 0 ? stockVal : 1}" class="w-8 text-center text-xs font-bold bg-transparent border-0 focus:outline-none" readonly>
+                      <button type="button" onclick="changeQtyInput('${id}', 1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">+</button>
+                    </div>
+                  ` : ''}
 
-                  <button type="button" onclick="addToCart('${id}', '${escapeHtml(oe)}', '${escapeHtml(name)}', ${listPrice}, ${netPrice}, ${stockVal}, '${escapeHtml(img)}')"
-                    class="flex-1 h-10 bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                    <span>Sepete Ekle</span>
-                  </button>
+                  ${actionBtnHtml}
                 </div>
               </div>
 
@@ -2592,7 +2673,7 @@
       currentBrand = brand || name;
 
       // DOM Güncellemesi
-      const guideTitle = document.getElementById('guide-header-title');
+      const guideTitle = document.getElementById('guide-title') || document.getElementById('guide-header-title');
       const vinInput = document.getElementById('vin-banner-input');
 
       if (guideTitle) guideTitle.innerHTML = `<span>${name} Parçaları Satın Alma Rehberi</span><span class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full">B2B Teknik Kılavuz</span>`;
@@ -2622,6 +2703,10 @@
     }
 
     function addToCart(id, oe, name, listPrice, netPrice, stock, img) {
+      if (!stock || stock <= 0) {
+        requestCatalogQuote(id, oe, name);
+        return;
+      }
       const existing = cart.find(it => it.id === id);
       const qtyInput = document.getElementById(`qty-${id}`);
       const addQty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
@@ -2757,7 +2842,7 @@
 
       if (!token || !isLoggedIn()) {
         if (window.Swal) {
-          Swal.fire({
+          window.Swal.fire({
             icon: 'warning',
             title: 'Bayi Girişi Gerekli',
             text: 'Lütfen siparişi tamamlamak için Bayi Girişi yapınız.',
@@ -2807,7 +2892,7 @@
           closeCartDrawer();
 
           if (window.Swal) {
-            Swal.fire({
+            window.Swal.fire({
               icon: 'success',
               title: 'Siparişiniz Başarıyla Alındı!',
               html: `
@@ -2847,18 +2932,36 @@
       const brand = prod.manufacturer || prod.vehicleBrand || 'OEM';
       const models = prod.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
       const labor = prod.estimatedLaborTime || '45 Dk';
+      const stock = parseInt(prod.stock !== undefined ? prod.stock : 14, 10);
+      const isLocal = prod.isLocalStock !== false && stock > 0;
       const netPrice = parseFloat(prod.discountedPrice || prod.defaultPrice || 1450);
       const listPrice = parseFloat(prod.defaultPrice || prod.listPrice || (netPrice * 1.25));
       const img = prod.imageUrl || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
-      const stock = parseInt(prod.stock !== undefined ? prod.stock : 14, 10);
 
-      document.getElementById('detail-oe-badge').textContent = oe;
-      document.getElementById('detail-brand-badge').textContent = brand;
-      document.getElementById('detail-title').textContent = name;
-      document.getElementById('detail-models').textContent = `🚗 Uyumlu: ${models}`;
-      document.getElementById('detail-labor-text').textContent = `Tahmini İşçilik: ${labor}`;
-      document.getElementById('detail-price').textContent = `₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('detail-list-price').textContent = `₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`;
+      const oeBadge = document.getElementById('detail-oe-badge');
+      if (oeBadge) oeBadge.textContent = oe;
+      const brandBadge = document.getElementById('detail-brand-badge');
+      if (brandBadge) brandBadge.textContent = brand;
+      const titleEl = document.getElementById('detail-title');
+      if (titleEl) titleEl.textContent = name;
+      const modelsEl = document.getElementById('detail-models');
+      if (modelsEl) modelsEl.textContent = `🚗 Uyumlu: ${models}`;
+      const laborEl = document.getElementById('detail-labor-text');
+      if (laborEl) laborEl.textContent = `Tahmini İşçilik: ${labor}`;
+
+      const priceEl = document.getElementById('detail-price');
+      const listPriceEl = document.getElementById('detail-list-price');
+      if (isLocal) {
+        if (priceEl) priceEl.textContent = `₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`;
+        if (listPriceEl) {
+          listPriceEl.textContent = `₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`;
+          listPriceEl.style.display = '';
+        }
+      } else {
+        if (priceEl) priceEl.textContent = 'Fiyat Alınız';
+        if (listPriceEl) listPriceEl.style.display = 'none';
+      }
+
       const detailImgEl = document.getElementById('detail-img');
       if (detailImgEl) {
         detailImgEl.src = img;
@@ -2868,10 +2971,21 @@
 
       const btnAdd = document.getElementById('detail-btn-add');
       if (btnAdd) {
-        btnAdd.onclick = () => {
-          addToCart(id, oe, name, listPrice, netPrice, stock, img);
-          closeProductDetailModal();
-        };
+        if (isLocal) {
+          btnAdd.innerHTML = '<span>Sepete Ekle</span>';
+          btnAdd.className = 'w-full py-3 bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer';
+          btnAdd.onclick = () => {
+            addToCart(id, oe, name, listPrice, netPrice, stock, img);
+            closeProductDetailModal();
+          };
+        } else {
+          btnAdd.innerHTML = '<span>📞 Talep Et</span>';
+          btnAdd.className = 'w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer';
+          btnAdd.onclick = () => {
+            closeProductDetailModal();
+            requestCatalogQuote(id, oe, name);
+          };
+        }
       }
 
       const modal = document.getElementById('modal-product-detail');
@@ -2898,17 +3012,50 @@
       img.src = imageUrl || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=800&auto=format&fit=crop&q=80';
       if (cap) cap.textContent = caption || '';
       modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+      if (document.body) document.body.style.overflow = 'hidden';
     }
 
     function closeImageModal() {
       const modal = document.getElementById('image-modal');
       if (!modal) return;
       modal.classList.add('hidden');
-      document.body.style.overflow = '';
+      if (document.body) document.body.style.overflow = '';
     }
     window.openImageModal = openImageModal;
     window.closeImageModal = closeImageModal;
+
+    // --------------------------------------------------------------------------
+    // 7.2 KATALOG PARÇA TALEP ET (prompt.md ADIM 2)
+    // --------------------------------------------------------------------------
+    function requestCatalogQuote(id, oe, name) {
+      if (window.Swal) {
+        window.Swal.fire({
+          title: 'Katalog Referans Parça Talebi',
+          html: `
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
+              <p>Bu parça şu anda anlık lokal stoklarımızda bulunmamaktadır, ancak <strong>Parts.Catalogs Tedarik Ağı</strong> üzerinden derhal sipariş edilebilir.</p>
+              <div class="p-3 bg-slate-100 rounded-xl border border-slate-200 font-mono">
+                <div><strong>OE Numarası:</strong> ${escapeHtml(oe)}</div>
+                <div><strong>Parça Adı:</strong> ${escapeHtml(name)}</div>
+              </div>
+              <p class="text-slate-500 font-sans">Yetkili servisimiz sizinle en kısa sürede iletişime geçerek özel B2B fiyat teklifi ve teslimat süresi paylaşacaktır.</p>
+            </div>
+          `,
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'Talebi İlet',
+          cancelButtonText: 'Vazgeç',
+          confirmButtonColor: '#f97316'
+        }).then(res => {
+          if (res.isConfirmed) {
+            showToast(`"${oe}" parçası için tedarik talebiniz başarıyla alındı.`, 'success');
+          }
+        });
+      } else {
+        alert(`"${oe}" parçası için tedarik talebiniz başarıyla alındı.`);
+      }
+    }
+    window.requestCatalogQuote = requestCatalogQuote;
 
     // --------------------------------------------------------------------------
     // prompt.md ADIM 1: OEM Arama ve Sıralama Algoritması (Exact Match First)
@@ -2958,6 +3105,12 @@
       };
 
       return items.sort((a, b) => {
+        // prompt.md ADIM 1: Lokal stoklu olanlar, harici katalog referanslarının her zaman üstündedir
+        const aLocal = a.isLocalStock !== false && (a.stock || 0) > 0;
+        const bLocal = b.isLocalStock !== false && (b.stock || 0) > 0;
+        if (aLocal && !bLocal) return -1;
+        if (!aLocal && bLocal) return 1;
+
         const scoreA = getScore(a);
         const scoreB = getScore(b);
         return scoreA - scoreB;
@@ -3010,11 +3163,11 @@
           container.innerHTML = favProducts.map(p => `
             <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
               <div>
-                <span class="font-mono text-[10px] font-bold text-slate-500">${p.oeNumber}</span>
-                <h4 class="text-xs font-bold text-slate-900">${p.name}</h4>
+                <span class="font-mono text-[10px] font-bold text-slate-500">${escapeHtml(p.oeNumber)}</span>
+                <h4 class="text-xs font-bold text-slate-900">${escapeHtml(p.name)}</h4>
                 <div class="text-xs font-mono font-bold text-orange-600 mt-0.5">₺${parseFloat(p.discountedPrice || p.defaultPrice || 1450).toFixed(2)}</div>
               </div>
-              <button type="button" onclick="addToCart('${p.id}', '${p.oeNumber}', '${p.name}', ${p.defaultPrice}, ${p.discountedPrice || p.defaultPrice}, 10, '${p.imageUrl}'); closeFavoritesModal();" class="px-3 py-1.5 bg-[#f97316] text-white font-bold text-xs rounded-lg">
+              <button type="button" onclick="addToCart('${escapeJs(p.id)}', '${escapeJs(p.oeNumber)}', '${escapeJs(p.name)}', ${p.defaultPrice || 1450}, ${p.discountedPrice || p.defaultPrice || 1450}, ${p.stock || 10}, '${escapeJs(p.imageUrl || '')}'); closeFavoritesModal();" class="px-3 py-1.5 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs rounded-lg transition-colors cursor-pointer">
                 Sepete Ekle
               </button>
             </div>
@@ -3233,7 +3386,7 @@
     // --------------------------------------------------------------------------
     function showToast(msg, type = 'success') {
       if (window.Swal) {
-        Swal.fire({
+        window.Swal.fire({
           toast: true,
           position: 'top-end',
           icon: type === 'danger' ? 'error' : (type === 'warning' ? 'warning' : 'success'),
@@ -3256,6 +3409,64 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
+
+    function escapeJs(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    // Explicitly attach all interactive handlers to window
+    window.addToCart = addToCart;
+    window.changeQtyInput = changeQtyInput;
+    window.updateCartItemQty = updateCartItemQty;
+    window.removeCartItem = removeCartItem;
+    window.renderCartItems = renderCartItems;
+    window.updateCartBadges = updateCartBadges;
+    window.fetchProducts = fetchProducts;
+    window.applyClientFilters = applyClientFilters;
+    window.buildAndFetchFilters = buildAndFetchFilters;
+    window.sortExactMatchFirst = sortExactMatchFirst;
+    window.openCartDrawer = openCartDrawer;
+    window.closeCartDrawer = closeCartDrawer;
+    window.openFavoritesModal = openFavoritesModal;
+    window.closeFavoritesModal = closeFavoritesModal;
+    window.toggleFavorite = toggleFavorite;
+    window.openProductDetailModal = openProductDetailModal;
+    window.closeProductDetailModal = closeProductDetailModal;
+    window.openVehicleSelectorModal = openVehicleSelectorModal;
+    window.closeVehicleSelectorModal = closeVehicleSelectorModal;
+    window.selectVehicle = selectVehicle;
+    window.focusVinBanner = focusVinBanner;
+    window.verifyBannerVin = verifyBannerVin;
+    window.handleSearchSubmit = handleSearchSubmit;
+    window.toggleSearchTypeDropdown = toggleSearchTypeDropdown;
+    window.closeSearchTypeDropdown = closeSearchTypeDropdown;
+    window.setSearchType = setSearchType;
+    window.handleOemFilterInput = handleOemFilterInput;
+    window.handleSubCategoryToggle = handleSubCategoryToggle;
+    window.handleManufacturerToggle = handleManufacturerToggle;
+    window.applyPriceFilter = applyPriceFilter;
+    window.toggleInStockOnly = toggleInStockOnly;
+    window.resetAllFilters = resetAllFilters;
+    window.handleSortChange = handleSortChange;
+    window.submitStoreOrder = submitStoreOrder;
+    window.toggleUserDropdown = toggleUserDropdown;
+    window.closeUserDropdown = closeUserDropdown;
+    window.toggleMegaMenu = toggleMegaMenu;
+    window.closeMegaMenu = closeMegaMenu;
+    window.handleLoginSubmit = handleLoginSubmit;
+    window.closeAuthModal = closeAuthModal;
+    window.logout = logout;
+    window.openMyOrdersModal = openMyOrdersModal;
+    window.closeMyOrdersModal = closeMyOrdersModal;
+    window.showToast = showToast;
+    window.escapeJs = escapeJs;
+    window.escapeHtml = escapeHtml;
   </script>
 </body>
 </html>
