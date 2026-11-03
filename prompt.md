@@ -43,3 +43,5 @@ supplierName (Hangi Firmada/Bayide olduğu - product.tenant.name üzerinden)
 isLocalStock (Bizim bayilerimizde varsa true, sadece katalog verisiyse false)
 
 EMİR: Frontend tasarımıyla uğraşma. Arama endpoint'ini sadece girilen metni değil, girilen metnin MUADİLLERİNİ de yerel veritabanında IN operatörü ile arayacak ve HANGİ FİRMADA stok olduğunu (tenant ilişkisiyle) dönecek şekilde derhal inşa et. Hata yutmak (silent fail) yasaktır, catch bloğunda hataları konsola bas.
+görsel farklı şimdi arama yaptım oe orada yazıyor fakat oem numarasının neye ait olduğu belirsiz ait olduğu teknik şema resmi yok farklı bir htmlden alıntı görsel girmiş girmesin o buraları full düzelt referans videosu atıcam sana ona benzesin video senin referansın bu şekilde çalışacak oem numarasıyla sorgu yapıcam ardından elimde stok varsa o en başta gözükecek firma isimleri yaazılacak fiyatları yazılacak ardından o oem numarasına karşılık gelebilecek referans kodları stokta varsa yaazacak yoksada yazacak capraz referans da gözüksün referansın orda sadece işe başla referans şeklinde yap css aynı olmak zorunda değil aynıda olmasın zaten çok farklı olabilir yeterki fikir eş değer olsun
+
