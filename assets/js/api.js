@@ -2415,6 +2415,10 @@
       }
     }
 
+    // prompt.md ADIM 1: URL normalizasyonu (Gereksiz çift slash ve sonundaki '/' işaretini temizle)
+    url = url.replace(/([^:]\/)\/+/g, '$1');
+    url = url.replace(/\/+(\?|$)/, '$1');
+
     let body = options.body;
     if (body && typeof body === 'object' && !(body instanceof FormData) && !(body instanceof URLSearchParams)) {
       body = JSON.stringify(body);
@@ -2493,12 +2497,11 @@
 
       return data;
 
-    } catch (networkError) {
-      console.info('[API] Canlı backend sunucusuna bağlanılamadı. Dayanıklı çevrimdışı motor devreye giriyor...');
+    } catch (error) {
+      // prompt.md ADIM 1: "Çevrimdışı motor" fallback'i tamamen kaldırıldı
+      console.error("Gerçek API Hatası:", error);
+      throw error;
     }
-
-    // 4. Çevrimdışı / Bağımsız Dayanıklı Yanıt Motoru (Fallback)
-    return handleOfflineMock(endpoint, options);
   }
 
   /**

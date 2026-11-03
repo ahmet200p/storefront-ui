@@ -569,15 +569,16 @@
 
           <div class="flex items-center gap-3">
             <span class="text-xs text-slate-400 hidden sm:inline" id="sort-summary-text">Sayfa Başı: 24</span>
+            <!-- prompt.md ADIM 3: id="btn-grid-view" ve id="btn-list-view" -->
             <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden">
-              <button type="button" onclick="setViewMode('grid')" id="view-mode-grid" class="p-1.5 px-2.5 bg-slate-900 text-white text-xs font-bold cursor-pointer" title="Grid Görünümü">⊞</button>
-              <button type="button" onclick="setViewMode('table')" id="view-mode-table" class="p-1.5 px-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer" title="Tablo Görünümü">☰</button>
+              <button type="button" id="btn-grid-view" onclick="setViewMode('grid')" class="p-1.5 px-2.5 bg-slate-900 text-white text-xs font-bold cursor-pointer transition-colors" title="Grid (Izgara) Görünümü">⊞</button>
+              <button type="button" id="btn-list-view" onclick="setViewMode('list')" class="p-1.5 px-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer transition-colors" title="List (Şerit) Görünümü">☰</button>
             </div>
           </div>
         </div>
 
-        <!-- Products Grid Container (prompt.md ADIM 1: lg:grid-cols-3 gap-6 ile büyütüldü) -->
-        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Products Container (prompt.md ADIM 3: id="products-container") -->
+        <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <!-- Dinamik olarak JS ile çizdirilir -->
         </div>
 
@@ -1527,6 +1528,7 @@
       checkAuthState();
       initSidebarListeners();
       initNavbarCategoryListeners();
+      initViewModeButtons();
       buildAndFetchFilters();
       updateFilterFacetCounts([]);
       await fetchProducts();
@@ -1544,7 +1546,7 @@
         currentCategory = category.trim();
       }
 
-      const grid = document.getElementById('products-grid');
+      const grid = document.getElementById('products-container') || document.getElementById('products-grid');
       const emptyState = document.getElementById('empty-catalog-state');
 
       try {
@@ -1569,14 +1571,18 @@
         }
 
         const queryString = queryParams.toString();
-        const requestPath = '/store/products' + (queryString ? '?' + queryString : '');
-        const fullUrl = `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api${requestPath}`;
+        // prompt.md ADIM 1: URL sonundaki fazladan slash ve çift slash temizlenir
+        const requestPath = ('/store/products' + (queryString ? '?' + queryString : '')).replace(/\/+(\?|$)/, '$1');
+        const fullUrl = `https://saas-g-ncel-10-10-2026simdi-main.onrender.com/api${requestPath}`.replace(/([^:]\/)\/+/g, '$1');
 
         let data = null;
         if (typeof apiFetch === 'function') {
           data = await apiFetch(requestPath);
         } else {
           const rawRes = await fetch(fullUrl);
+          if (!rawRes.ok) {
+            throw new Error(`HTTP ${rawRes.status}: ${rawRes.statusText}`);
+          }
           data = await rawRes.json();
         }
 
@@ -1694,8 +1700,9 @@
         updateFilterFacetCounts(allProducts);
 
         applyClientFilters();
-      } catch (err) {
-        console.error('[LOAD_PRODUCTS_ERROR]:', err);
+      } catch (error) {
+        // prompt.md ADIM 1: Gerçek API hatasını konsola yazdır
+        console.error("Gerçek API Hatası:", error);
         allProducts = [];
         updateFilterFacetCounts([]);
         applyClientFilters();
@@ -2024,11 +2031,17 @@
       }
 
       displayedProducts = filtered;
-      renderProductsGrid();
+      renderProducts(displayedProducts);
     }
 
-    function renderProductsGrid() {
-      const grid = document.getElementById('products-grid');
+    // ==========================================================================
+    // 2. ÜRÜN LİSTELEME / RENDER FONKSİYONU (prompt.md ADIM 2 & ADIM 3)
+    // ==========================================================================
+    function renderProducts(itemsToRender) {
+      if (Array.isArray(itemsToRender)) {
+        displayedProducts = itemsToRender;
+      }
+      const container = document.getElementById('products-container') || document.getElementById('products-grid');
       const emptyState = document.getElementById('empty-catalog-state');
       const activePartsBadge = document.getElementById('stat-active-parts');
       const totalCountTitle = document.getElementById('title-total-count');
@@ -2042,21 +2055,118 @@
       if (paginationRange) paginationRange.textContent = count > 0 ? `1 - ${count}` : '0 - 0';
 
       if (count === 0) {
-        if (grid) grid.innerHTML = '';
+        if (container) container.innerHTML = '';
         if (emptyState) emptyState.classList.remove('hidden');
         return;
       }
 
       if (emptyState) emptyState.classList.add('hidden');
-      if (!grid) return;
+      if (!container) return;
 
-      if (viewMode === 'table') {
-        renderTableView(grid, displayedProducts);
+      // prompt.md ADIM 2: Eski statik verileri tamamen temizle
+      container.innerHTML = '';
+
+      // prompt.md ADIM 3: Şerit (List / flex flex-row) Görünümü
+      if (viewMode === 'list' || viewMode === 'table') {
+        container.className = 'flex flex-col space-y-4';
+        container.innerHTML = displayedProducts.map((p, idx) => {
+          const id = p.tenantProductId || p.productId || p.id || `prod-${idx}`;
+          const oe = p.oeNumber || '5Q0 698 151';
+          const name = p.name || 'Yedek Parça';
+          const brand = p.manufacturer || p.vehicleBrand || 'OEM';
+          const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
+          const sellerName = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'AFS Bayisi';
+          const listPrice = parseFloat(p.price !== undefined && p.price !== null ? p.price : (p.customPrice !== undefined && p.customPrice !== null ? p.customPrice : (p.defaultPrice || p.listPrice || 1450)));
+          const netPrice = parseFloat(p.discountedPrice || (p.pricing && p.pricing.finalPrice) || (listPrice * 0.8));
+          const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : 14, 10);
+          const img = p.imageUrl || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&auto=format&fit=crop&q=80';
+          const isFav = favorites.includes(id);
+
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-slate-300 transition-all flex flex-col md:flex-row items-stretch md:items-center justify-between p-4 gap-5 group">
+              
+              <!-- Sol: Parça Görseli -->
+              <div class="relative w-full md:w-44 h-40 shrink-0 bg-slate-50/80 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer" onclick="openProductDetailModal('${id}')">
+                <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-36 object-contain group-hover:scale-105 transition-transform duration-300">
+                ${stock > 0 ? `
+                  <span class="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>${stock} Stokta
+                  </span>
+                ` : `
+                  <span class="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shadow-2xs">
+                    Tükendi
+                  </span>
+                `}
+              </div>
+
+              <!-- Orta: Başlık, OEM & Araç Uyumluluk Bilgileri -->
+              <div class="flex-1 min-w-0 flex flex-col justify-between py-1">
+                <div>
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <span class="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                      ${escapeHtml(oe)}
+                    </span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                      ${escapeHtml(brand)}
+                    </span>
+                    <button type="button" onclick="event.stopPropagation(); toggleFavorite('${id}')" class="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer transition-colors" title="Favorilere Ekle">
+                      ${isFav ? '❤️' : '🤍'}
+                    </button>
+                  </div>
+
+                  <h3 class="text-base font-bold text-slate-900 hover:text-orange-600 cursor-pointer transition-colors leading-snug line-clamp-2" onclick="openProductDetailModal('${id}')" title="${escapeHtml(name)}">
+                    ${escapeHtml(name)}
+                  </h3>
+
+                  <div class="text-xs text-slate-500 font-medium truncate mt-1">🚗 ${escapeHtml(models)}</div>
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                  <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200 shadow-2xs">
+                    <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span>Satıcı: <strong class="font-semibold text-slate-900">${escapeHtml(sellerName)}</strong></span>
+                  </div>
+                  <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                    ✓ Aynı Gün Kargo
+                  </span>
+                </div>
+              </div>
+
+              <!-- Sağ: Fiyat ve Sepete Ekle -->
+              <div class="w-full md:w-56 shrink-0 md:border-l md:border-slate-100 md:pl-5 flex flex-col justify-between py-1">
+                <div class="flex md:flex-col justify-between items-baseline md:items-end mb-3">
+                  <div class="text-right">
+                    <span class="text-xs text-slate-400 line-through font-mono font-medium">₺${listPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                    <div class="text-xl font-black text-slate-900 font-mono tracking-tight">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span class="text-[10px] font-bold text-slate-400 uppercase">+KDV</span></div>
+                  </div>
+                  <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md mt-1">%20 B2B İskonto</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 px-1.5 h-10">
+                    <button type="button" onclick="changeQtyInput('${id}', -1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">-</button>
+                    <input type="number" id="qty-${id}" value="1" min="1" max="${stock}" class="w-8 text-center text-xs font-bold bg-transparent border-0 focus:outline-none" readonly>
+                    <button type="button" onclick="changeQtyInput('${id}', 1)" class="w-7 text-slate-600 font-bold hover:text-black transition-colors">+</button>
+                  </div>
+
+                  <button type="button" onclick="addToCart('${id}', '${escapeHtml(oe)}', '${escapeHtml(name)}', ${listPrice}, ${netPrice}, ${stock}, '${escapeHtml(img)}')"
+                    class="flex-1 h-10 bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>Sepete Ekle</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          `;
+        }).join('');
         return;
       }
 
-      grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
-      grid.innerHTML = displayedProducts.map((p, idx) => {
+      // prompt.md ADIM 3: Grid (Dikey Kutu) Görünümü
+      container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
+      container.innerHTML = displayedProducts.map((p, idx) => {
         const id = p.tenantProductId || p.productId || p.id || `prod-${idx}`;
         const oe = p.oeNumber || '5Q0 698 151';
         const name = p.name || 'Yedek Parça';
@@ -2088,7 +2198,7 @@
                 </div>
               </div>
 
-              <!-- prompt.md ADIM 1: Büyütülmüş Görsel Alanı (h-56 ve max-h-52 object-contain) -->
+              <!-- Büyütülmüş Görsel Alanı -->
               <div class="relative h-56 bg-slate-50/80 rounded-2xl overflow-hidden flex items-center justify-center p-4 cursor-pointer" onclick="openProductDetailModal('${id}')">
                 <img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" class="max-h-52 object-contain group-hover:scale-105 transition-transform duration-300">
                 ${stock > 0 ? `
@@ -2106,15 +2216,12 @@
             <!-- Ürün Bilgileri -->
             <div class="p-4 pt-3 flex-1 flex flex-col justify-between">
               <div>
-                <!-- Ürün Başlığı (text-base font-bold) -->
                 <h3 class="text-base font-bold text-slate-900 line-clamp-2 hover:text-orange-600 cursor-pointer transition-colors leading-snug" onclick="openProductDetailModal('${id}')" title="${escapeHtml(name)}">
                   ${escapeHtml(name)}
                 </h3>
                 
-                <!-- Araç Uyumluluk Yazısı -->
                 <div class="text-xs text-slate-500 font-medium truncate mt-1">🚗 ${escapeHtml(models)}</div>
                 
-                <!-- prompt.md ADIM 3: Araç Uyumluluğunun hemen altına "Bayi Adı" Etiketi -->
                 <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200 mt-2 shadow-2xs">
                   <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -2123,7 +2230,7 @@
                 </div>
               </div>
 
-              <!-- Fiyat ve Sepet Butonları (prompt.md ADIM 1: Büyütülmüş Fiyat ve Buton) -->
+              <!-- Fiyat ve Sepet Butonları -->
               <div class="mt-4 pt-3 border-t border-slate-100">
                 <div class="flex items-baseline justify-between mb-2.5">
                   <div>
@@ -2154,56 +2261,9 @@
       }).join('');
     }
 
-    function renderTableView(container, items) {
-      container.className = 'w-full overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-xs';
-      container.innerHTML = `
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
-            <tr>
-              <th class="p-3">OEM / Kod</th>
-              <th class="p-3">Parça Adı</th>
-              <th class="p-3">Satıcı (Bayi)</th>
-              <th class="p-3">Marka</th>
-              <th class="p-3">Uyumlu Araç</th>
-              <th class="p-3">Stok</th>
-              <th class="p-3">Net B2B Fiyat</th>
-              <th class="p-3 text-right">İşlem</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 font-medium">
-            ${items.map(p => {
-              const id = p.tenantProductId || p.productId || p.id;
-              const oe = p.oeNumber || '-';
-              const name = p.name || 'Parça';
-              const brand = p.manufacturer || p.vehicleBrand || 'OEM';
-              const models = p.compatibleModels || (activeVehicle ? activeVehicle.name : 'Tüm Modeller');
-              const seller = (p.user && (p.user.companyName || p.user.name)) || p.companyName || p.sellerName || p.dealerName || p.tenantName || 'AFS Bayisi';
-              const netPrice = parseFloat(p.discountedPrice || p.price || p.customPrice || p.defaultPrice || 1450);
-              const stock = parseInt(p.stock !== undefined && p.stock !== null ? p.stock : 14, 10);
-              const img = p.imageUrl || '';
-
-              return `
-                <tr class="hover:bg-slate-50/80 transition-colors">
-                  <td class="p-3 font-mono font-bold text-slate-900">${escapeHtml(oe)}</td>
-                  <td class="p-3 font-bold text-slate-900 cursor-pointer hover:text-orange-600" onclick="openProductDetailModal('${id}')">${escapeHtml(name)}</td>
-                  <td class="p-3"><span class="inline-flex items-center gap-1 font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"><svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> Satıcı: ${escapeHtml(seller)}</span></td>
-                  <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">${escapeHtml(brand)}</span></td>
-                  <td class="p-3 text-slate-500">${escapeHtml(models)}</td>
-                  <td class="p-3"><span class="font-bold text-emerald-600">${stock} Adet</span></td>
-                  <td class="p-3 font-mono font-bold text-slate-900">₺${netPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                  <td class="p-3 text-right">
-                    <button type="button" onclick="addToCart('${id}', '${escapeHtml(oe)}', '${escapeHtml(name)}', ${netPrice}, ${netPrice}, ${stock}, '${escapeHtml(img)}')"
-                      class="px-3 py-1.5 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs rounded-lg transition-all shadow-xs cursor-pointer">
-                      Sepete Ekle
-                    </button>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      `;
-    }
+    const renderProductsGrid = renderProducts;
+    window.renderProducts = renderProducts;
+    window.renderProductsGrid = renderProductsGrid;
 
     // --------------------------------------------------------------------------
     // 3. SEARCH & FILTER HANDLERS
@@ -2283,19 +2343,49 @@
       applyClientFilters();
     }
 
+    // prompt.md ADIM 3: IZGARA (GRID) VE ŞERİT (LIST) GÖRÜNÜM GEÇİŞİ (TOGGLE)
     function setViewMode(mode) {
       viewMode = mode;
-      const btnGrid = document.getElementById('view-mode-grid');
-      const btnTable = document.getElementById('view-mode-table');
+      const btnGrid = document.getElementById('btn-grid-view') || document.getElementById('view-mode-grid');
+      const btnList = document.getElementById('btn-list-view') || document.getElementById('view-mode-table');
+      const container = document.getElementById('products-container') || document.getElementById('products-grid');
+
       if (mode === 'grid') {
-        btnGrid.className = 'p-1.5 px-2.5 bg-slate-900 text-white text-xs font-bold cursor-pointer';
-        btnTable.className = 'p-1.5 px-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer';
+        if (btnGrid) btnGrid.className = 'p-1.5 px-2.5 bg-slate-900 text-white text-xs font-bold cursor-pointer transition-colors';
+        if (btnList) btnList.className = 'p-1.5 px-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer transition-colors';
+        if (container) {
+          container.classList.remove('flex', 'flex-col', 'space-y-4');
+          container.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+        }
       } else {
-        btnTable.className = 'p-1.5 px-2.5 bg-slate-900 text-white text-xs font-bold cursor-pointer';
-        btnGrid.className = 'p-1.5 px-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer';
+        if (btnList) btnList.className = 'p-1.5 px-2.5 bg-slate-900 text-white text-xs font-bold cursor-pointer transition-colors';
+        if (btnGrid) btnGrid.className = 'p-1.5 px-2.5 bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer transition-colors';
+        if (container) {
+          container.classList.remove('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+          container.classList.add('flex', 'flex-col', 'space-y-4');
+        }
       }
-      renderProductsGrid();
+      renderProducts(displayedProducts);
     }
+
+    function initViewModeButtons() {
+      const btnGrid = document.getElementById('btn-grid-view') || document.getElementById('view-mode-grid');
+      const btnList = document.getElementById('btn-list-view') || document.getElementById('view-mode-table');
+      if (btnGrid) {
+        btnGrid.addEventListener('click', function(e) {
+          e.preventDefault();
+          setViewMode('grid');
+        });
+      }
+      if (btnList) {
+        btnList.addEventListener('click', function(e) {
+          e.preventDefault();
+          setViewMode('list');
+        });
+      }
+    }
+    window.setViewMode = setViewMode;
+    window.initViewModeButtons = initViewModeButtons;
 
     function filterByCategory(catName, btn) {
       document.querySelectorAll('.nav-cat-btn').forEach(b => {
