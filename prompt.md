@@ -1,57 +1,45 @@
-# ACİL DÜZELTME: Parts.Catalogs API Entegrasyonu Çalışmıyor (Boş Dizi Dönüyor)
+# KESİN GÖREV: B2B Çapraz OEM (Cross-Reference) ve Bayi Stok Tarama Motorunun Yazılması
 
-**HATA TESPİTİ:**
-Arama endpoint'ine istek atıldığında `data: []` (boş dizi) dönüyor. Sistem `axios` ile Parts.Catalogs API'sine GİTMİYOR ya da gidiyorsa hatayı yutuyor (silent fail). Müşteri bir parça arattığında, lokal stokta olmasa bile dış katalogdan çekilip listelenmesi KESİNLİKLE şarttır.
+**GÖREV BİLDİRİMİ:**
+Mevcut arama (search) sistemi hatalıdır ve boş dizi dönmektedir. Kullanıcı bir OE kodu arattığında; sistem sadece o OE kodunu DEĞİL, harici API'den o kodun TÜM MUADİLLERİNİ bulmalı, ardından bu muadil havuzundaki tüm kodları yerel veritabanında (Prisma) tarayarak HANGİ BAYİDE/FİRMADA ne kadar stok olduğunu tespit etmelidir. (CSS veya Frontend UI değişikliği İSTENMİYOR, sadece Backend veri mantığı).
 
-Lütfen Backend (Node.js) arama controller'ını aç ve şu 3 adımı harfiyen uygula:
+Lütfen Backend (Node.js) arama endpoint'ini (`GET /api/store/products` vb.) TAMAMEN SİL ve KESİNLİKLE aşağıdaki 3 aşamalı algoritmaya göre yeniden yaz:
 
-### ADIM 1: ARAMA ENDPOINT'İNİ AXIOS İLE ZORUNLU YAZ
-Arama yapılan endpoint'i şu şekilde GÜNCELLE. Kendi başına basit Prisma sorgusu YAZMA:
+### AŞAMA 1: HARİCİ API'DEN ÇAPRAZ OEM (MUADİL) HAVUZU OLUŞTURMA
+- `axios` kullanarak `process.env.PARTS_CATALOG_API_KEY` ile dış API'ye (Parts.Catalogs/TecDoc) aranan kelimeyi/kodu (`searchQuery`) gönder.
+- Dönen sonuçlardaki Orijinal OE kodu ve TÜM Muadil (Cross-reference) kodlarını ayıklayıp tek bir benzersiz `Array` (Dizi) içine topla (Örn: `oemPool = ['ArananKod', 'Muadil1', 'Muadil2', ...]`).
+- Eğer dış API yanıt vermezse veya çökerse, `oemPool` sadece kullanıcının arattığı kodu barındırsın (Sistemin çökmesini engelle).
 
-```javascript
-// Gerekli importlar: const axios = require('axios');
-app.get('/api/store/products', async (req, res) => {
-    const searchQuery = req.query.search;
-    let finalResults = [];
+### AŞAMA 2: PRISMA İLE YEREL BAYİ/STOK TARAMASI (IN SORGUSU)
+- Elde ettiğin bu geniş `oemPool` dizisini Prisma'ya vererek, bu kodlardan HERHANGİ BİRİNE sahip olan tüm yerel ürünleri getir:
+  ```javascript
+  const localProducts = await prisma.product.findMany({
+      where: {
+          isActive: true,
+          oemNumber: { in: oemPool } // Sadece aranan kelime değil, tüm muadiller taranıyor!
+      },
+      include: {
+          tenant: true // Parçanın hangi firmada (bayide) olduğunu bilmek zorundayız!
+      }
+  });
+  Dış API'den dönen Katalog listesi ile localProducts listesini harmanla.
 
-    try {
-        if (searchQuery) {
-            console.log("Parts.Catalogs API'ye gidiliyor... Aranan:", searchQuery);
-            // DİKKAT: Aşağıdaki URL'yi Parts.Catalogs dökümanına göre DÜZELT! (Örn: /api/v1/search)
-            const apiUrl = `[https://api.parts.catalogs.com/v1/search?q=$](https://api.parts.catalogs.com/v1/search?q=$){searchQuery}&api_key=${process.env.PARTS_CATALOG_API_KEY}`; 
-            
-            const catalogResponse = await axios.get(apiUrl);
-            
-            // Eğer API sonuç döndüyse, bunları final dizisine ekle
-            if (catalogResponse.data && catalogResponse.data.results) {
-                finalResults = catalogResponse.data.results.map(item => ({
-                    ...item,
-                    isLocalStock: false, // Varsayılan olarak stokta yok
-                    stock: 0,
-                    price: null
-                }));
-            }
-        }
-        
-        // 2. AŞAMA: Prisma'da (Lokal DB) arama yap
-        const localProducts = await prisma.product.findMany({
-            where: { 
-                isActive: true, 
-                OR: [
-                    { oemNumber: { contains: searchQuery, mode: 'insensitive' } },
-                    { name: { contains: searchQuery, mode: 'insensitive' } }
-                ]
-            }
-        });
+Frontend'in videodaki gibi detaylı bir tablo/liste basabilmesi için dönen JSON objesinin içine KESİNLİKLE şu alanları ekle:
 
-        // 3. AŞAMA: Harmanlama (Local olanları üstte tut, çakışan katalog verilerini ez)
-        // (Harmanlama mantığını buraya yaz)
-        // finalResults = [ ...localProducts, ...kalanKatalogUrunleri ];
+brand (Marka)
 
-        return res.status(200).json({ success: true, data: finalResults, count: finalResults.length });
-    } catch (error) {
-        console.error("Dış API veya DB Hatası:", error.message);
-        // Hatayı yutma, konsola ve cevaba bas!
-        return res.status(500).json({ success: false, error: "Arama sırasında bir hata oluştu", details: error.message });
-    }
-});
+oemNumber (Ana OEM Kodu)
+
+crossReferences (Muadil Kodlar - Virgülle ayrılmış metin)
+
+name (Ürün Adı)
+
+stock (Stok Adedi)
+
+price (Fiyat)
+
+supplierName (Hangi Firmada/Bayide olduğu - product.tenant.name üzerinden)
+
+isLocalStock (Bizim bayilerimizde varsa true, sadece katalog verisiyse false)
+
+EMİR: Frontend tasarımıyla uğraşma. Arama endpoint'ini sadece girilen metni değil, girilen metnin MUADİLLERİNİ de yerel veritabanında IN operatörü ile arayacak ve HANGİ FİRMADA stok olduğunu (tenant ilişkisiyle) dönecek şekilde derhal inşa et. Hata yutmak (silent fail) yasaktır, catch bloğunda hataları konsola bas.
