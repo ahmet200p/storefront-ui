@@ -1,28 +1,33 @@
-# KRİTİK MİMARİ HATASI: Arama Motoru Dış API'ye (Parts.Catalogs) Çıkmıyor!
+# KESİN EMİR: Arama Motorunu Dış API (Parts.Catalogs / TecDoc) Odaklı Yeniden Yaz
 
-**HATA TESPİTİ:**
-Arama kutusuna "101010" gibi test amaçlı bir OE kodu girildiğinde Frontend boş dizi (`[]`) alıyor. Bu durum, Backend `search` fonksiyonunun Parts.Catalogs API'sine GİTMEDİĞİNİ, sadece Prisma (Lokal DB) üzerinde arama yapıp kestirip attığını kesin olarak kanıtlıyor. Müşteri arattığı parça bizim stokta olmasa bile KATALOG VERİSİ olarak ekrana gelmeli ve "Stokta Yok" yazmalıdır!
+**DURUM:** Arama kutusuna bir OE yazıldığında, sistem sadece yerel Prisma DB'de arama yapıyor ve bulamayınca boş dönüyor. BU İSTENEN BİR DAVRANIŞ DEĞİLDİR! Sistem yerel veritabanında ürün OLMASA DAHİ harici API'ye gidip o parçayı, API'deki görsellerini ve muadillerini çekip ekrana getirmek ZORUNDADIR.
 
-Lütfen Backend dosyasındaki (Örn: `app.js` veya `product.controller.js`) arama endpoint'ini SİL ve aşağıdaki hibrit (Merge) mantığına göre KESİNLİKLE baştan yaz:
+Lütfen Backend'deki arama controller'ını (`GET /api/store/products` veya search route'u) TAMAMEN SİL ve AŞAĞIDAKİ MANTIĞA GÖRE YENİDEN YAZ. Kendi bildiğin basit Prisma sorgusunda ısrar etme.
 
-### ADIM 1: BACKEND HİBRİT ARAMA KONTROLÖRÜ (ZORUNLU MİMARİ)
-Endpoint (`GET /api/store/products`) şu 3 aşamalı işlemi sırasıyla YAPMAK ZORUNDADIR:
-
-1. **Lokal Prisma Sorgusu:** Aranan kelimeyi/OE kodunu önce yerel veritabanında (`prisma.product.findMany`) ara. Bulduklarını bir diziye koy (Örn: `localResults`). Bu ürünlere `isLocalStock: true` işaretini ekle.
-2. **Parts.Catalogs Dış API Sorgusu:** `process.env.PARTS_CATALOG_API_KEY` kullanarak Axios veya Node-Fetch ile harici Parts.Catalogs API'sine istek at. Aranan numaraya ait katalog verilerini (muadiller, resimler, diğer OE'ler) çek (Örn: `catalogResults`).
-3. **Harmanlama (Merge) ve Tekilleştirme:** 
-   - `catalogResults` dizisini dön (map). 
-   - Eğer katalogdaki bir OE numarası senin `localResults` dizinde VARSA, onu atla (çünkü senin stoğun öncelikli).
-   - Eğer katalogdaki OE senin lokal dizinde YOKSA, bunu ana listeye ekle ancak bu objelere KESİNLİKLE `isLocalStock: false`, `stock: 0`, `price: null` değerlerini ata.
-   - Listeyi, `isLocalStock: true` olanlar (elimizdekiler) EN ÜSTTE, `false` olanlar (sadece katalog bilgisi olanlar) ALTTA olacak şekilde sırala (Sort). Sonra `res.json()` ile frontend'e gönder.
-
-### ADIM 2: FRONTEND "STOKTA YOK / KATALOG" TASARIMI
-- `store.html` (veya JS) içindeki `renderProducts` fonksiyonunda, API'den harmanlanmış olarak gelen bu listeyi ekrana basarken şu kontrolü ZORUNLU KIL:
+### ADIM 1: BACKEND - DIŞ API'YE AXIOS/FETCH İLE BAĞLANMA
+- Backend arama route'unun içine `axios` (veya Node.js için `fetch`) dahil et.
+- Kullanıcı arama yaptığında (`req.query.search`), ÖNCE `process.env.PARTS_CATALOG_API_KEY` kullanarak Parts.Catalogs API'sinin arama uç noktasına istek at. 
+- Örnek Kurgu (Bunu koda dök):
   ```javascript
-  if (product.isLocalStock) {
-      // Yeşil Stok rozeti + Fiyat göster + Sepete Ekle aktif
-  } else {
-      // Gri/Kırmızı "Katalog Ürünü / Stokta Yok" rozeti.
-      // Fiyat yerine "Fiyat Sorunuz" yaz.
-      // Sepete Ekle butonunu "Talep Et" yap veya disabled (kapat) hale getir.
-  }
+  // 1. Dış API'den Katalog Verisini Çek
+  const catalogResponse = await axios.get(`[https://api.parts.catalogs/.../search?q=$](https://api.parts.catalogs/.../search?q=$){searchQuery}&key=${process.env.PARTS_CATALOG_API_KEY}`);
+  const catalogItems = catalogResponse.data.results || [];
+
+  // 2. Kendi Yerel Veritabanımızda (Prisma) Stok Kontrolü Yap
+  const localProducts = await prisma.product.findMany({
+      where: { isActive: true, oemNumber: { in: catalogItems.map(item => item.oem) } }
+  });
+
+  // 3. Verileri Harmanla (Merge)
+  // catalogItems dizisini döngüye sok. Eğer katalogdaki OE yerel stokta (localProducts) varsa isLocalStock: true yap, kendi fiyat/stok bilgini ekle.
+  // Eğer stokta yoksa isLocalStock: false, stock: 0, price: null olarak işaretle.
+  // Harmanlanmış bu listeyi frontend'e dön.
+  store.html'e bağlı JS dosyasındaki renderProducts (ürün kartını basan) fonksiyonu güncelle.
+
+API'den dönen listede product.isLocalStock === true ise: "Sepete Ekle" butonunu aktif et, yeşil "Stokta Mevcut" rozeti ekle ve fiyatı göster.
+
+product.isLocalStock === false ise (Sadece dış katalogdan gelmişse): "Sepete Ekle" butonunu devre dışı bırak (veya "Fiyat Sorunuz/Talep Et" yap), fiyat kısmını gizle ve Gri/Kırmızı renkle "Stokta Yok / Sadece Katalog Ürünü" etiketini bas.
+
+Her iki durumda da dış API'den gelen ürün resmini, Orijinal OE numarasını ve muadil (cross-reference) kodlarını ekrana KESİNLİKLE bas.
+
+SON UYARI: Tembellik yapıp Prisma'dan sorgu çekip bırakma. Ana amaç stokta olmayan parçanın dahi katalog bilgisini, muadillerini ve API görselini müşteriye sunmaktır.

@@ -2162,8 +2162,8 @@
             ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-green-200 shadow-2xs">
                 <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Stokta Mevcut (${stockVal} Adet)
               </span>`
-            : `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Katalog Ürünü / Stokta Yok
+            : `<span class="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-rose-200 shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Stokta Yok / Sadece Katalog Ürünü
               </span>`;
 
           // prompt.md ADIM 2: Sepete Ekle veya Talep Et butonu
@@ -2173,8 +2173,8 @@
                 <span>Sepete Ekle</span>
               </button>`
             : `<button type="button" onclick="requestCatalogQuote('${escapeJs(id)}', '${escapeJs(oe)}', '${escapeJs(name)}')"
-                class="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer" title="Parça temin talebinde bulunun">
-                <span>📞 Talep Et</span>
+                class="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer" title="Fiyat Sorunuz / Parça temin talebinde bulunun">
+                <span>📞 Fiyat Sorunuz / Talep Et</span>
               </button>`;
 
           return `
@@ -2254,7 +2254,7 @@
                       <span class="text-xs text-slate-400 font-medium">Katalog Ürünü</span>
                       <div class="text-lg font-black text-rose-600 tracking-tight">Fiyat Sorunuz</div>
                     </div>
-                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mt-1 border border-slate-200">Stokta Yok</span>
+                    <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md mt-1 border border-rose-200">Stokta Yok / Sadece Katalog Ürünü</span>
                   `}
                 </div>
 
@@ -2310,8 +2310,8 @@
           ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-green-200 shadow-2xs">
               <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Stokta Mevcut (${stockVal} Adet)
             </span>`
-          : `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-slate-200 shadow-2xs">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Katalog Ürünü / Stokta Yok
+          : `<span class="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1.5 border border-rose-200 shadow-2xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Stokta Yok / Sadece Katalog Ürünü
             </span>`;
 
         // prompt.md ADIM 2: Sepete Ekle veya Talep Et butonu
@@ -2321,8 +2321,8 @@
               <span>Sepete Ekle</span>
             </button>`
           : `<button type="button" onclick="requestCatalogQuote('${escapeJs(id)}', '${escapeJs(oe)}', '${escapeJs(name)}')"
-              class="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer" title="Parça temin talebinde bulunun">
-              <span>📞 Talep Et</span>
+              class="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer" title="Fiyat Sorunuz / Parça temin talebinde bulunun">
+              <span>📞 Fiyat Sorunuz / Talep Et</span>
             </button>`;
 
         return `
@@ -2403,7 +2403,7 @@
                       <span class="text-xs text-slate-400 font-medium">Katalog Ürünü</span>
                       <div class="text-base font-black text-rose-600 tracking-tight">Fiyat Sorunuz</div>
                     </div>
-                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">Stokta Yok</span>
+                    <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">Stokta Yok / Sadece Katalog Ürünü</span>
                   `}
                 </div>
 
@@ -2991,7 +2991,7 @@
             closeProductDetailModal();
           };
         } else {
-          btnAdd.innerHTML = '<span>📞 Talep Et</span>';
+          btnAdd.innerHTML = '<span>📞 Fiyat Sorunuz / Talep Et</span>';
           btnAdd.className = 'w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer';
           btnAdd.onclick = () => {
             closeProductDetailModal();
